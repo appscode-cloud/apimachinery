@@ -146,13 +146,13 @@ const (
 	DefaultHost         = "host-0"
 )
 
-// Prometheus metrics related constants
+// ==================== Prometheus metrics related constants ============
 const (
 	PromJobStashBackup  = "stash-backup"
 	PromJobStashRestore = "stash-restore"
 )
 
-// RBAC related constants
+// ==================== RBAC related constants ==========================
 const (
 	KindRole        = "Role"
 	KindClusterRole = "ClusterRole"
@@ -168,7 +168,31 @@ const (
 	StashStorageClassReaderClusterRole     = "stash-sc-reader"
 )
 
-// Condition related constants
+// ================== Condition related constants ===========================
+// Condition Types Related Constants
+const (
+	// RepositoryFound indicates whether the respective Repository crd found or not.
+	RepositoryFound = "RepositoryFound"
+	// BackendSecretFound indicates whether the respective backend secret found or not.
+	BackendSecretFound = "BackendSecretFound"
+	// BackupTargetFound indicates whether the backup target was found
+	BackupTargetFound = "BackupTargetFound"
+	// StashSidecarInjected indicates whether stash sidecar was injected into the targeted workload
+	// This condition is applicable only for sidecar model
+	StashSidecarInjected = "StashSidecarInjected"
+	// CronJobCreated indicates whether the backup triggering CronJob was created
+	CronJobCreated = "CronJobCreated"
+
+	// RestoreTargetFound indicates whether the restore target was found
+	RestoreTargetFound = "RestoreTargetFound"
+	// StashInitContainerInjected indicates whether stash init-container was injected into the targeted workload
+	// This condition is applicable only for sidecar model
+	StashInitContainerInjected = "StashInitContainerInjected"
+	// RestoreJobCreated indicates whether the restore job was created
+	RestoreJobCreated = "RestoreJobCreated"
+)
+
+// Condition Reason Related Constants
 const (
 	// TargetAvailable indicates that the condition transitioned to this state because the target was available
 	TargetAvailable = "TargetAvailable"

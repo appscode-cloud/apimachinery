@@ -63,10 +63,10 @@ type Invoker struct {
 	ObjectJson         []byte
 	AddFinalizer       func() error
 	RemoveFinalizer    func() error
-	HasCondition       func(*v1beta1.TargetRef, v1beta1.BackupInvokerCondition) (bool, error)
-	GetCondition       func(*v1beta1.TargetRef, v1beta1.BackupInvokerCondition) (int, *kmapi.Condition, error)
+	HasCondition       func(*v1beta1.TargetRef, string) (bool, error)
+	GetCondition       func(*v1beta1.TargetRef, string) (int, *kmapi.Condition, error)
 	SetCondition       func(*v1beta1.TargetRef, kmapi.Condition) error
-	IsConditionTrue    func(*v1beta1.TargetRef, v1beta1.BackupInvokerCondition) (bool, error)
+	IsConditionTrue    func(*v1beta1.TargetRef, string) (bool, error)
 }
 
 func ExtractBackupInvokerInfo(stashClient cs.Interface, invokerType, invokerName, namespace string) (Invoker, error) {
@@ -128,7 +128,7 @@ func ExtractBackupInvokerInfo(stashClient cs.Interface, invokerType, invokerName
 			}, metav1.PatchOptions{})
 			return err
 		}
-		invoker.HasCondition = func(target *v1beta1.TargetRef, condType v1beta1.BackupInvokerCondition) (bool, error) {
+		invoker.HasCondition = func(target *v1beta1.TargetRef, condType string) (bool, error) {
 			backupBatch, err := stashClient.StashV1beta1().BackupBatches(namespace).Get(context.TODO(), invokerName, metav1.GetOptions{})
 			if err != nil {
 				return false, err
@@ -138,7 +138,7 @@ func ExtractBackupInvokerInfo(stashClient cs.Interface, invokerType, invokerName
 			}
 			return kmapi.HasCondition(backupBatch.Status.Conditions, string(condType)), nil
 		}
-		invoker.GetCondition = func(target *v1beta1.TargetRef, condType v1beta1.BackupInvokerCondition) (int, *kmapi.Condition, error) {
+		invoker.GetCondition = func(target *v1beta1.TargetRef, condType string) (int, *kmapi.Condition, error) {
 			backupBatch, err := stashClient.StashV1beta1().BackupBatches(namespace).Get(context.TODO(), invokerName, metav1.GetOptions{})
 			if err != nil {
 				return -1, nil, err
@@ -162,7 +162,7 @@ func ExtractBackupInvokerInfo(stashClient cs.Interface, invokerType, invokerName
 			}, metav1.UpdateOptions{})
 			return err
 		}
-		invoker.IsConditionTrue = func(target *v1beta1.TargetRef, condType v1beta1.BackupInvokerCondition) (bool, error) {
+		invoker.IsConditionTrue = func(target *v1beta1.TargetRef, condType string) (bool, error) {
 			backupBatch, err := stashClient.StashV1beta1().BackupBatches(namespace).Get(context.TODO(), invokerName, metav1.GetOptions{})
 			if err != nil {
 				return false, err
@@ -225,14 +225,14 @@ func ExtractBackupInvokerInfo(stashClient cs.Interface, invokerType, invokerName
 			}, metav1.PatchOptions{})
 			return err
 		}
-		invoker.HasCondition = func(target *v1beta1.TargetRef, condType v1beta1.BackupInvokerCondition) (bool, error) {
+		invoker.HasCondition = func(target *v1beta1.TargetRef, condType string) (bool, error) {
 			backupConfig, err := stashClient.StashV1beta1().BackupConfigurations(namespace).Get(context.TODO(), invokerName, metav1.GetOptions{})
 			if err != nil {
 				return false, err
 			}
 			return kmapi.HasCondition(backupConfig.Status.Conditions, string(condType)), nil
 		}
-		invoker.GetCondition = func(target *v1beta1.TargetRef, condType v1beta1.BackupInvokerCondition) (int, *kmapi.Condition, error) {
+		invoker.GetCondition = func(target *v1beta1.TargetRef, condType string) (int, *kmapi.Condition, error) {
 			backupConfig, err := stashClient.StashV1beta1().BackupConfigurations(namespace).Get(context.TODO(), invokerName, metav1.GetOptions{})
 			if err != nil {
 				return -1, nil, err
@@ -247,7 +247,7 @@ func ExtractBackupInvokerInfo(stashClient cs.Interface, invokerType, invokerName
 			}, metav1.UpdateOptions{})
 			return err
 		}
-		invoker.IsConditionTrue = func(target *v1beta1.TargetRef, condType v1beta1.BackupInvokerCondition) (bool, error) {
+		invoker.IsConditionTrue = func(target *v1beta1.TargetRef, condType string) (bool, error) {
 			backupConfig, err := stashClient.StashV1beta1().BackupConfigurations(namespace).Get(context.TODO(), invokerName, metav1.GetOptions{})
 			if err != nil {
 				return false, err
