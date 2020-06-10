@@ -207,10 +207,17 @@ API rule violation: list_type_missing,stash.appscode.dev/apimachinery/apis/stash
 API rule violation: list_type_missing,stash.appscode.dev/apimachinery/apis/stash/v1beta1,FunctionSpec,VolumeMounts
 API rule violation: list_type_missing,stash.appscode.dev/apimachinery/apis/stash/v1beta1,HostBackupStats,Snapshots
 API rule violation: list_type_missing,stash.appscode.dev/apimachinery/apis/stash/v1beta1,MemberConditions,Conditions
+API rule violation: list_type_missing,stash.appscode.dev/apimachinery/apis/stash/v1beta1,RestoreBatchList,Items
+API rule violation: list_type_missing,stash.appscode.dev/apimachinery/apis/stash/v1beta1,RestoreBatchSpec,Members
+API rule violation: list_type_missing,stash.appscode.dev/apimachinery/apis/stash/v1beta1,RestoreBatchStatus,Conditions
+API rule violation: list_type_missing,stash.appscode.dev/apimachinery/apis/stash/v1beta1,RestoreBatchStatus,Members
+API rule violation: list_type_missing,stash.appscode.dev/apimachinery/apis/stash/v1beta1,RestoreMemberStatus,Conditions
+API rule violation: list_type_missing,stash.appscode.dev/apimachinery/apis/stash/v1beta1,RestoreMemberStatus,Stats
 API rule violation: list_type_missing,stash.appscode.dev/apimachinery/apis/stash/v1beta1,RestoreSessionList,Items
 API rule violation: list_type_missing,stash.appscode.dev/apimachinery/apis/stash/v1beta1,RestoreSessionSpec,Rules
 API rule violation: list_type_missing,stash.appscode.dev/apimachinery/apis/stash/v1beta1,RestoreSessionStatus,Conditions
 API rule violation: list_type_missing,stash.appscode.dev/apimachinery/apis/stash/v1beta1,RestoreSessionStatus,Stats
+API rule violation: list_type_missing,stash.appscode.dev/apimachinery/apis/stash/v1beta1,RestoreTarget,Rules
 API rule violation: list_type_missing,stash.appscode.dev/apimachinery/apis/stash/v1beta1,RestoreTarget,VolumeClaimTemplates
 API rule violation: list_type_missing,stash.appscode.dev/apimachinery/apis/stash/v1beta1,RestoreTarget,VolumeMounts
 API rule violation: list_type_missing,stash.appscode.dev/apimachinery/apis/stash/v1beta1,Rule,Paths

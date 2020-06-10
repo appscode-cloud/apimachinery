@@ -2419,6 +2419,11 @@ spec:
               target:
                 description: Target specify the backup target
                 properties:
+                  alias:
+                    description: Alias represents the identifier of the backed up
+                      data in the repository. This will be used as `hostname` or will
+                      be used to generate the `hostname` for the restic repository.
+                    type: string
                   paths:
                     description: Paths specify the file paths to backup
                     items:
