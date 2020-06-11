@@ -581,7 +581,7 @@ message RestoreBatchSpec {
   // Hooks specifies the actions that Stash should take before or after restore.
   // Cannot be updated.
   // +optional
-  optional BackupHooks hooks = 5;
+  optional RestoreHooks hooks = 5;
 }
 
 message RestoreBatchStatus {

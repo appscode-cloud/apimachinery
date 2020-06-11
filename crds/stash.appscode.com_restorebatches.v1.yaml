@@ -66,9 +66,9 @@ spec:
                 description: Hooks specifies the actions that Stash should take before
                   or after restore. Cannot be updated.
                 properties:
-                  postBackup:
-                    description: PostBackup is called immediately after a backup session
-                      is complete.
+                  postRestore:
+                    description: PostRestore is called immediately after a restore
+                      session is complete.
                     properties:
                       containerName:
                         description: ContainerName specifies the name of the container
@@ -216,9 +216,9 @@ spec:
                         - port
                         type: object
                     type: object
-                  preBackup:
-                    description: PreBackup is called immediately before a backup session
-                      is initiated.
+                  preRestore:
+                    description: PreRestore is called immediately before a restore
+                      session is initiated.
                     properties:
                       containerName:
                         description: ContainerName specifies the name of the container

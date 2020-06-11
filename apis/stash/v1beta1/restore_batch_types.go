@@ -66,7 +66,7 @@ type RestoreBatchSpec struct {
 	// Hooks specifies the actions that Stash should take before or after restore.
 	// Cannot be updated.
 	// +optional
-	Hooks *BackupHooks `json:"hooks,omitempty" protobuf:"bytes,5,opt,name=hooks"`
+	Hooks *RestoreHooks `json:"hooks,omitempty" protobuf:"bytes,5,opt,name=hooks"`
 }
 
 type RestoreBatchStatus struct {

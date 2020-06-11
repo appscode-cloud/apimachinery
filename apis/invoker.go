@@ -134,9 +134,9 @@ func ExtractBackupInvokerInfo(stashClient cs.Interface, invokerType, invokerName
 				return false, err
 			}
 			if target != nil {
-				return hasMemberCondition(backupBatch.Status.MemberConditions, *target, string(condType)), nil
+				return hasMemberCondition(backupBatch.Status.MemberConditions, *target, condType), nil
 			}
-			return kmapi.HasCondition(backupBatch.Status.Conditions, string(condType)), nil
+			return kmapi.HasCondition(backupBatch.Status.Conditions, condType), nil
 		}
 		invoker.GetCondition = func(target *v1beta1.TargetRef, condType string) (int, *kmapi.Condition, error) {
 			backupBatch, err := stashClient.StashV1beta1().BackupBatches(namespace).Get(context.TODO(), invokerName, metav1.GetOptions{})
@@ -144,10 +144,10 @@ func ExtractBackupInvokerInfo(stashClient cs.Interface, invokerType, invokerName
 				return -1, nil, err
 			}
 			if target != nil {
-				idx, cond := getMemberCondition(backupBatch.Status.MemberConditions, *target, string(condType))
+				idx, cond := getMemberCondition(backupBatch.Status.MemberConditions, *target, condType)
 				return idx, cond, nil
 			}
-			idx, cond := kmapi.GetCondition(backupBatch.Status.Conditions, string(condType))
+			idx, cond := kmapi.GetCondition(backupBatch.Status.Conditions, condType)
 			return idx, cond, nil
 
 		}
@@ -168,9 +168,9 @@ func ExtractBackupInvokerInfo(stashClient cs.Interface, invokerType, invokerName
 				return false, err
 			}
 			if target != nil {
-				return isMemberConditionTrue(backupBatch.Status.MemberConditions, *target, string(condType)), nil
+				return isMemberConditionTrue(backupBatch.Status.MemberConditions, *target, condType), nil
 			}
-			return kmapi.IsConditionTrue(backupBatch.Status.Conditions, string(condType)), nil
+			return kmapi.IsConditionTrue(backupBatch.Status.Conditions, condType), nil
 		}
 	case v1beta1.ResourceKindBackupConfiguration:
 		// get BackupConfiguration
@@ -230,14 +230,14 @@ func ExtractBackupInvokerInfo(stashClient cs.Interface, invokerType, invokerName
 			if err != nil {
 				return false, err
 			}
-			return kmapi.HasCondition(backupConfig.Status.Conditions, string(condType)), nil
+			return kmapi.HasCondition(backupConfig.Status.Conditions, condType), nil
 		}
 		invoker.GetCondition = func(target *v1beta1.TargetRef, condType string) (int, *kmapi.Condition, error) {
 			backupConfig, err := stashClient.StashV1beta1().BackupConfigurations(namespace).Get(context.TODO(), invokerName, metav1.GetOptions{})
 			if err != nil {
 				return -1, nil, err
 			}
-			idx, cond := kmapi.GetCondition(backupConfig.Status.Conditions, string(condType))
+			idx, cond := kmapi.GetCondition(backupConfig.Status.Conditions, condType)
 			return idx, cond, nil
 		}
 		invoker.SetCondition = func(target *v1beta1.TargetRef, condition kmapi.Condition) error {
@@ -252,7 +252,7 @@ func ExtractBackupInvokerInfo(stashClient cs.Interface, invokerType, invokerName
 			if err != nil {
 				return false, err
 			}
-			return kmapi.IsConditionTrue(backupConfig.Status.Conditions, string(condType)), nil
+			return kmapi.IsConditionTrue(backupConfig.Status.Conditions, condType), nil
 		}
 	default:
 		return invoker, fmt.Errorf("failed to extract invoker info. Reason: unknown invoker")

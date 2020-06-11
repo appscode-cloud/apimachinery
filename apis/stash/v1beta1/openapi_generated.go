@@ -19019,14 +19019,14 @@ func schema_apimachinery_apis_stash_v1beta1_RestoreBatchSpec(ref common.Referenc
 					"hooks": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Hooks specifies the actions that Stash should take before or after restore. Cannot be updated.",
-							Ref:         ref("stash.appscode.dev/apimachinery/apis/stash/v1beta1.BackupHooks"),
+							Ref:         ref("stash.appscode.dev/apimachinery/apis/stash/v1beta1.RestoreHooks"),
 						},
 					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"k8s.io/api/core/v1.LocalObjectReference", "stash.appscode.dev/apimachinery/apis/stash/v1beta1.BackupHooks", "stash.appscode.dev/apimachinery/apis/stash/v1beta1.RestoreTargetSpec"},
+			"k8s.io/api/core/v1.LocalObjectReference", "stash.appscode.dev/apimachinery/apis/stash/v1beta1.RestoreHooks", "stash.appscode.dev/apimachinery/apis/stash/v1beta1.RestoreTargetSpec"},
 	}
 }
 

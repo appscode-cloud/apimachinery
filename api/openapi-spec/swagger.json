@@ -11939,7 +11939,7 @@
         },
         "hooks": {
           "description": "Hooks specifies the actions that Stash should take before or after restore. Cannot be updated.",
-          "$ref": "#/definitions/dev.appscode.stash.apimachinery.apis.stash.v1beta1.BackupHooks"
+          "$ref": "#/definitions/dev.appscode.stash.apimachinery.apis.stash.v1beta1.RestoreHooks"
         },
         "members": {
           "description": "Members is a list of restore targets and their configuration that are part of this batch",

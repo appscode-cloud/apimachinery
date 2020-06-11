@@ -904,7 +904,7 @@ func (in *RestoreBatchSpec) DeepCopyInto(out *RestoreBatchSpec) {
 	}
 	if in.Hooks != nil {
 		in, out := &in.Hooks, &out.Hooks
-		*out = new(BackupHooks)
+		*out = new(RestoreHooks)
 		(*in).DeepCopyInto(*out)
 	}
 	return
