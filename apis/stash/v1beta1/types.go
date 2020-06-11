@@ -116,3 +116,10 @@ type TargetRef struct {
 	Kind       string `json:"kind,omitempty" protobuf:"bytes,2,opt,name=kind"`
 	Name       string `json:"name,omitempty" protobuf:"bytes,3,opt,name=name"`
 }
+
+type ExecutionOrder string
+
+const (
+	Parallel   ExecutionOrder = "Parallel"
+	Sequential ExecutionOrder = "Sequential"
+)

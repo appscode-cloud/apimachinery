@@ -55,6 +55,11 @@ spec:
               - Restic
               - VolumeSnapshotter
               type: string
+            executionOrder:
+              description: ExecutionOrder indicate whether to restore the members
+                in the sequential order as they appear in the members list. The default
+                value is "Parallel" which means the members will be restored in parallel.
+              type: string
             hooks:
               description: Hooks specifies the actions that Stash should take before
                 or after restore. Cannot be updated.
@@ -354,11 +359,6 @@ spec:
                       type: object
                   type: object
               type: object
-            maintainOrder:
-              description: MaintainOrder indicate whether to restore the members in
-                the sequential order as they appear in the members list. The default
-                value is "false" which means the members will be restored in parallel.
-              type: boolean
             members:
               description: Members is a list of restore targets and their configuration
                 that are part of this batch

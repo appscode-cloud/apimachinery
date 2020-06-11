@@ -11131,13 +11131,13 @@
           "description": "Driver indicates the name of the agent to use to backup the target. Supported values are \"Restic\", \"VolumeSnapshotter\". Default value is \"Restic\".",
           "type": "string"
         },
+        "executionOrder": {
+          "description": "ExecutionOrder indicate whether to backup the members in the sequential order as they appear in the members list. The default value is \"Parallel\" which means the members will be backed up in parallel.",
+          "type": "string"
+        },
         "hooks": {
           "description": "Actions that Stash should take in response to backup sessions. Cannot be updated.",
           "$ref": "#/definitions/dev.appscode.stash.apimachinery.apis.stash.v1beta1.BackupHooks"
-        },
-        "maintainOrder": {
-          "description": "MaintainOrder indicate whether to backup the members in the sequential order as they appear in the members list. The default value is \"false\" which means the members will be backed up in parallel.",
-          "type": "boolean"
         },
         "members": {
           "description": "members is a list of backup configurations that are part of this batch",
@@ -11933,13 +11933,13 @@
           "description": "Driver indicates the name of the agent to use to restore the target. Supported values are \"Restic\", \"VolumeSnapshotter\". Default value is \"Restic\".",
           "type": "string"
         },
+        "executionOrder": {
+          "description": "ExecutionOrder indicate whether to restore the members in the sequential order as they appear in the members list. The default value is \"Parallel\" which means the members will be restored in parallel.",
+          "type": "string"
+        },
         "hooks": {
           "description": "Hooks specifies the actions that Stash should take before or after restore. Cannot be updated.",
           "$ref": "#/definitions/dev.appscode.stash.apimachinery.apis.stash.v1beta1.BackupHooks"
-        },
-        "maintainOrder": {
-          "description": "MaintainOrder indicate whether to restore the members in the sequential order as they appear in the members list. The default value is \"false\" which means the members will be restored in parallel.",
-          "type": "boolean"
         },
         "members": {
           "description": "Members is a list of restore targets and their configuration that are part of this batch",

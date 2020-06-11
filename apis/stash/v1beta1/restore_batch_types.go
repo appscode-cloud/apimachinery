@@ -58,10 +58,11 @@ type RestoreBatchSpec struct {
 	// Members is a list of restore targets and their configuration that are part of this batch
 	// +optional
 	Members []RestoreTargetSpec `json:"members,omitempty" protobuf:"bytes,3,rep,name=members"`
-	// MaintainOrder indicate whether to restore the members in the sequential order as they appear in the members list.
-	// The default value is "false" which means the members will be restored in parallel.
+	// ExecutionOrder indicate whether to restore the members in the sequential order as they appear in the members list.
+	// The default value is "Parallel" which means the members will be restored in parallel.
+	// +kubebuilder:default=Parallel
 	// +optional
-	MaintainOrder bool `json:"maintainOrder,omitempty" protobuf:"bytes,4,opt,name=maintainOrder"`
+	ExecutionOrder ExecutionOrder `json:"executionOrder,omitempty" protobuf:"bytes,4,opt,name=executionOrder"`
 	// Hooks specifies the actions that Stash should take before or after restore.
 	// Cannot be updated.
 	// +optional

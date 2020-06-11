@@ -17660,10 +17660,10 @@ func schema_apimachinery_apis_stash_v1beta1_BackupBatchSpec(ref common.Reference
 							Ref:         ref("stash.appscode.dev/apimachinery/apis/stash/v1beta1.BackupHooks"),
 						},
 					},
-					"maintainOrder": {
+					"executionOrder": {
 						SchemaProps: spec.SchemaProps{
-							Description: "MaintainOrder indicate whether to backup the members in the sequential order as they appear in the members list. The default value is \"false\" which means the members will be backed up in parallel.",
-							Type:        []string{"boolean"},
+							Description: "ExecutionOrder indicate whether to backup the members in the sequential order as they appear in the members list. The default value is \"Parallel\" which means the members will be backed up in parallel.",
+							Type:        []string{"string"},
 							Format:      "",
 						},
 					},
@@ -19009,10 +19009,10 @@ func schema_apimachinery_apis_stash_v1beta1_RestoreBatchSpec(ref common.Referenc
 							},
 						},
 					},
-					"maintainOrder": {
+					"executionOrder": {
 						SchemaProps: spec.SchemaProps{
-							Description: "MaintainOrder indicate whether to restore the members in the sequential order as they appear in the members list. The default value is \"false\" which means the members will be restored in parallel.",
-							Type:        []string{"boolean"},
+							Description: "ExecutionOrder indicate whether to restore the members in the sequential order as they appear in the members list. The default value is \"Parallel\" which means the members will be restored in parallel.",
+							Type:        []string{"string"},
 							Format:      "",
 						},
 					},

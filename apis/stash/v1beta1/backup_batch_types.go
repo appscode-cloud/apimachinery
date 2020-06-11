@@ -82,10 +82,11 @@ type BackupBatchSpec struct {
 	// Cannot be updated.
 	// +optional
 	Hooks *BackupHooks `json:"hooks,omitempty" protobuf:"bytes,9,opt,name=hooks"`
-	// MaintainOrder indicate whether to backup the members in the sequential order as they appear in the members list.
-	// The default value is "false" which means the members will be backed up in parallel.
+	// ExecutionOrder indicate whether to backup the members in the sequential order as they appear in the members list.
+	// The default value is "Parallel" which means the members will be backed up in parallel.
+	// +kubebuilder:default=Parallel
 	// +optional
-	MaintainOrder bool `json:"maintainOrder,omitempty" protobuf:"bytes,10,opt,name=maintainOrder"`
+	ExecutionOrder ExecutionOrder `json:"executionOrder,omitempty" protobuf:"bytes,10,opt,name=executionOrder"`
 }
 
 type BackupBatchStatus struct {

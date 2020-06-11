@@ -97,10 +97,11 @@ message BackupBatchSpec {
   // +optional
   optional BackupHooks hooks = 9;
 
-  // MaintainOrder indicate whether to backup the members in the sequential order as they appear in the members list.
-  // The default value is "false" which means the members will be backed up in parallel.
+  // ExecutionOrder indicate whether to backup the members in the sequential order as they appear in the members list.
+  // The default value is "Parallel" which means the members will be backed up in parallel.
+  // +kubebuilder:default=Parallel
   // +optional
-  optional bool maintainOrder = 10;
+  optional string executionOrder = 10;
 }
 
 message BackupBatchStatus {
@@ -571,10 +572,11 @@ message RestoreBatchSpec {
   // +optional
   repeated RestoreTargetSpec members = 3;
 
-  // MaintainOrder indicate whether to restore the members in the sequential order as they appear in the members list.
-  // The default value is "false" which means the members will be restored in parallel.
+  // ExecutionOrder indicate whether to restore the members in the sequential order as they appear in the members list.
+  // The default value is "Parallel" which means the members will be restored in parallel.
+  // +kubebuilder:default=Parallel
   // +optional
-  optional bool maintainOrder = 4;
+  optional string executionOrder = 4;
 
   // Hooks specifies the actions that Stash should take before or after restore.
   // Cannot be updated.

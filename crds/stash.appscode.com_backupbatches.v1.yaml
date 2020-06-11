@@ -61,6 +61,13 @@ spec:
                 - Restic
                 - VolumeSnapshotter
                 type: string
+              executionOrder:
+                default: Parallel
+                description: ExecutionOrder indicate whether to backup the members
+                  in the sequential order as they appear in the members list. The
+                  default value is "Parallel" which means the members will be backed
+                  up in parallel.
+                type: string
               hooks:
                 description: Actions that Stash should take in response to backup
                   sessions. Cannot be updated.
@@ -366,12 +373,6 @@ spec:
                         type: object
                     type: object
                 type: object
-              maintainOrder:
-                description: MaintainOrder indicate whether to backup the members
-                  in the sequential order as they appear in the members list. The
-                  default value is "false" which means the members will be backed
-                  up in parallel.
-                type: boolean
               members:
                 description: members is a list of backup configurations that are part
                   of this batch
