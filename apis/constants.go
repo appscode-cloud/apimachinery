@@ -171,10 +171,11 @@ const (
 // ================== Condition related constants ===========================
 // Condition Types Related Constants
 const (
-	// RepositoryFound indicates whether the respective Repository crd found or not.
+	// RepositoryFound indicates whether the respective Repository object was found or not.
 	RepositoryFound = "RepositoryFound"
-	// BackendSecretFound indicates whether the respective backend secret found or not.
+	// BackendSecretFound indicates whether the respective backend secret was found or not.
 	BackendSecretFound = "BackendSecretFound"
+
 	// BackupTargetFound indicates whether the backup target was found
 	BackupTargetFound = "BackupTargetFound"
 	// StashSidecarInjected indicates whether stash sidecar was injected into the targeted workload
@@ -194,6 +195,22 @@ const (
 
 // Condition Reason Related Constants
 const (
+	// RepositoryAvailable indicates that the condition transitioned to this state because the Repository was available
+	RepositoryAvailable = "RepositoryAvailable"
+	// RepositoryNotAvailable indicates that the condition transitioned to this state because the Repository was not available
+	RepositoryNotAvailable = "RepositoryNotAvailable"
+	// UnableToCheckRepositoryAvailability indicates that the condition transitioned to this state because operator was unable
+	// to check the Repository availability
+	UnableToCheckRepositoryAvailability = "UnableToCheckRepositoryAvailability"
+
+	// BackendSecretAvailable indicates that the condition transitioned to this state because the backend Secret was available
+	BackendSecretAvailable = "BackendSecretAvailable"
+	// BackendSecretNotAvailable indicates that the condition transitioned to this state because the backend Secret was not available
+	BackendSecretNotAvailable = "BackendSecretNotAvailable"
+	// UnableToCheckBackendSecretAvailability indicates that the condition transitioned to this state because operator was unable
+	// to check the backend Secret availability
+	UnableToCheckBackendSecretAvailability = "UnableToCheckBackendSecretAvailability"
+
 	// TargetAvailable indicates that the condition transitioned to this state because the target was available
 	TargetAvailable = "TargetAvailable"
 	// TargetNotAvailable indicates that the condition transitioned to this state because the target was not available
