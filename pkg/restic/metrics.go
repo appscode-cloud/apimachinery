@@ -506,7 +506,7 @@ func (metricOpt *MetricsOptions) SendRestoreSessionMetrics(config *rest.Config, 
 	metrics := newRestoreSessionMetrics(labels)
 	status := restoreSession.Status
 
-	if status.Phase == api_v1beta1.RestoreSessionSucceeded {
+	if status.Phase == api_v1beta1.RestoreSucceeded {
 		// mark entire restore session as succeeded
 		metrics.RestoreSessionMetrics.SessionSuccess.Set(1)
 

@@ -110,14 +110,14 @@ type RestoreSessionList struct {
 }
 
 // +kubebuilder:validation:Enum=Pending;Running;Succeeded;Failed;Unknown
-type RestoreSessionPhase string
+type RestorePhase string
 
 const (
-	RestoreSessionPending   RestoreSessionPhase = "Pending"
-	RestoreSessionRunning   RestoreSessionPhase = "Running"
-	RestoreSessionSucceeded RestoreSessionPhase = "Succeeded"
-	RestoreSessionFailed    RestoreSessionPhase = "Failed"
-	RestoreSessionUnknown   RestoreSessionPhase = "Unknown"
+	RestorePending      RestorePhase = "Pending"
+	RestoreRunning      RestorePhase = "Running"
+	RestoreSucceeded    RestorePhase = "Succeeded"
+	RestoreFailed       RestorePhase = "Failed"
+	RestorePhaseUnknown RestorePhase = "Unknown"
 )
 
 // +kubebuilder:validation:Enum=Succeeded;Failed;Unknown
@@ -133,7 +133,7 @@ type RestoreSessionStatus struct {
 	// Phase indicates the overall phase of the restore process for this RestoreSession. Phase will be "Succeeded" only if
 	// phase of all hosts are "Succeeded". If any of the host fail to complete restore, Phase will be "Failed".
 	// +optional
-	Phase RestoreSessionPhase `json:"phase,omitempty" protobuf:"bytes,1,opt,name=phase,casttype=RestoreSessionPhase"`
+	Phase RestorePhase `json:"phase,omitempty" protobuf:"bytes,1,opt,name=phase,casttype=RestorePhase"`
 	// TotalHosts specifies total number of hosts that will be restored for this RestoreSession
 	// +optional
 	TotalHosts *int32 `json:"totalHosts,omitempty" protobuf:"varint,2,opt,name=totalHosts"`

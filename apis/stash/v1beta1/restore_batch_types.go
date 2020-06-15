@@ -73,7 +73,7 @@ type RestoreBatchStatus struct {
 	// Phase indicates the overall phase of the restore process for this RestoreBatch. Phase will be "Succeeded" only if
 	// phase of all members are "Succeeded". If the restore process fail for any of the members, Phase will be "Failed".
 	// +optional
-	Phase RestoreSessionPhase `json:"phase,omitempty" protobuf:"bytes,1,opt,name=phase,casttype=RestoreSessionPhase"`
+	Phase RestorePhase `json:"phase,omitempty" protobuf:"bytes,1,opt,name=phase,casttype=RestorePhase"`
 	// SessionDuration specify total time taken to complete restore of all the members.
 	// +optional
 	SessionDuration string `json:"sessionDuration,omitempty" protobuf:"bytes,2,opt,name=sessionDuration"`
@@ -89,9 +89,10 @@ type RestoreBatchStatus struct {
 type RestoreTargetPhase string
 
 const (
-	TargetRestoreSucceeded TargetPhase = "Succeeded"
-	TargetRestoreRunning   TargetPhase = "Running"
-	TargetRestoreFailed    TargetPhase = "Failed"
+	TargetRestorePending   RestoreTargetPhase = "Pending"
+	TargetRestoreRunning   RestoreTargetPhase = "Running"
+	TargetRestoreSucceeded RestoreTargetPhase = "Succeeded"
+	TargetRestoreFailed    RestoreTargetPhase = "Failed"
 )
 
 type RestoreMemberStatus struct {

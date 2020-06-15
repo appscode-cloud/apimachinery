@@ -27,6 +27,7 @@ import (
 
 	core "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/reference"
 	kmapi "kmodules.xyz/client-go/api/v1"
 	core_util "kmodules.xyz/client-go/core/v1"
@@ -43,6 +44,13 @@ type RestoreTargetInfo struct {
 	Hooks                 *v1beta1.RestoreHooks
 }
 
+type RestoreInvokerStatus struct {
+	Phase           v1beta1.RestorePhase
+	SessionDuration string
+	Conditions      []kmapi.Condition
+	TargetStatus    []v1beta1.RestoreMemberStatus
+}
+
 type RestoreInvoker struct {
 	TypeMeta        metav1.TypeMeta
 	ObjectMeta      metav1.ObjectMeta
@@ -51,9 +59,11 @@ type RestoreInvoker struct {
 	Driver          v1beta1.Snapshotter
 	Repository      string
 	TargetsInfo     []RestoreTargetInfo
+	ExecutionOrder  v1beta1.ExecutionOrder
 	Hooks           *v1beta1.RestoreHooks
 	ObjectRef       *core.ObjectReference
 	OwnerRef        *metav1.OwnerReference
+	Status          RestoreInvokerStatus
 	ObjectJson      []byte
 	AddFinalizer    func() error
 	RemoveFinalizer func() error
@@ -61,9 +71,16 @@ type RestoreInvoker struct {
 	GetCondition    func(*v1beta1.TargetRef, string) (int, *kmapi.Condition, error)
 	SetCondition    func(*v1beta1.TargetRef, kmapi.Condition) error
 	IsConditionTrue func(*v1beta1.TargetRef, string) (bool, error)
+	NextInOrder     func(v1beta1.TargetRef, []v1beta1.RestoreMemberStatus) bool
+
+	GetPhase       func() (v1beta1.RestorePhase, error)
+	SetPhase       func(phase v1beta1.RestorePhase) error
+	GetTargetPhase func(v1beta1.TargetRef) (v1beta1.RestoreTargetPhase, error)
+	SetTargetPhase func(v1beta1.TargetRef, v1beta1.RestoreTargetPhase) error
+	CreateEvent    func(string, string, string, string) error
 }
 
-func ExtractRestoreInvokerInfo(stashClient cs.Interface, invokerType, invokerName, namespace string) (RestoreInvoker, error) {
+func ExtractRestoreInvokerInfo(kubeClient kubernetes.Interface, stashClient cs.Interface, invokerType, invokerName, namespace string) (RestoreInvoker, error) {
 	var invoker RestoreInvoker
 	switch invokerType {
 	case v1beta1.ResourceKindRestoreBatch:
@@ -82,6 +99,7 @@ func ExtractRestoreInvokerInfo(stashClient cs.Interface, invokerType, invokerNam
 		invoker.Driver = restoreBatch.Spec.Driver
 		invoker.Repository = restoreBatch.Spec.Repository.Name
 		invoker.Hooks = restoreBatch.Spec.Hooks
+		invoker.ExecutionOrder = restoreBatch.Spec.ExecutionOrder
 		invoker.OwnerRef = metav1.NewControllerRef(restoreBatch, v1beta1.SchemeGroupVersion.WithKind(v1beta1.ResourceKindRestoreBatch))
 		invoker.ObjectRef, err = reference.GetReference(stash_scheme.Scheme, restoreBatch)
 		if err != nil {
@@ -103,6 +121,12 @@ func ExtractRestoreInvokerInfo(stashClient cs.Interface, invokerType, invokerNam
 				Hooks:                 member.Hooks,
 			})
 		}
+
+		invoker.Status.Phase = restoreBatch.Status.Phase
+		invoker.Status.Conditions = restoreBatch.Status.Conditions
+		invoker.Status.SessionDuration = restoreBatch.Status.SessionDuration
+		invoker.Status.TargetStatus = restoreBatch.Status.Members
+
 		invoker.AddFinalizer = func() error {
 			_, _, err := v1beta1_util.PatchRestoreBatch(context.TODO(), stashClient.StashV1beta1(), restoreBatch, func(in *v1beta1.RestoreBatch) *v1beta1.RestoreBatch {
 				in.ObjectMeta = core_util.AddFinalizer(in.ObjectMeta, v1beta1.StashKey)
@@ -161,6 +185,36 @@ func ExtractRestoreInvokerInfo(stashClient cs.Interface, invokerType, invokerNam
 			}
 			return kmapi.IsConditionTrue(restoreBatch.Status.Conditions, condType), nil
 		}
+
+		invoker.NextInOrder = func(ref v1beta1.TargetRef, targets []v1beta1.RestoreMemberStatus) bool {
+			for i := range targets {
+				if targetMatched(ref, targets[i].Ref) {
+					break
+				}
+				if targets[i].Phase != v1beta1.TargetRestoreSucceeded {
+					return false
+				}
+			}
+			return true
+		}
+
+		invoker.GetPhase = func() (v1beta1.RestorePhase, error) {
+
+			// TODO
+			return v1beta1.RestorePending, nil
+		}
+		invoker.SetPhase = func(phase v1beta1.RestorePhase) error {
+			// TODO
+			return nil
+		}
+		invoker.GetTargetPhase = func(ref v1beta1.TargetRef) (v1beta1.RestoreTargetPhase, error) {
+			// TODO
+			return v1beta1.TargetRestorePending, nil
+		}
+		invoker.SetTargetPhase = func(ref v1beta1.TargetRef, phase v1beta1.RestoreTargetPhase) error {
+			// TODO
+			return nil
+		}
 	case v1beta1.ResourceKindRestoreSession:
 		// get RestoreSession
 		restoreSession, err := stashClient.StashV1beta1().RestoreSessions(namespace).Get(context.TODO(), invokerName, metav1.GetOptions{})
@@ -195,6 +249,20 @@ func ExtractRestoreInvokerInfo(stashClient cs.Interface, invokerType, invokerNam
 			InterimVolumeTemplate: restoreSession.Spec.InterimVolumeTemplate,
 			Hooks:                 restoreSession.Spec.Hooks,
 		})
+
+		invoker.Status.Phase = restoreSession.Status.Phase
+		invoker.Status.Conditions = restoreSession.Status.Conditions
+		invoker.Status.SessionDuration = restoreSession.Status.SessionDuration
+		if restoreSession.Spec.Target != nil {
+			invoker.Status.TargetStatus = append(invoker.Status.TargetStatus, v1beta1.RestoreMemberStatus{
+				Ref:        restoreSession.Spec.Target.Ref,
+				Conditions: restoreSession.Status.Conditions,
+				TotalHosts: restoreSession.Status.TotalHosts,
+				Phase:      v1beta1.RestoreTargetPhase(restoreSession.Status.Phase),
+				Stats:      restoreSession.Status.Stats,
+			})
+		}
+
 		invoker.AddFinalizer = func() error {
 			_, _, err := v1beta1_util.PatchRestoreSession(context.TODO(), stashClient.StashV1beta1(), restoreSession, func(in *v1beta1.RestoreSession) *v1beta1.RestoreSession {
 				in.ObjectMeta = core_util.AddFinalizer(in.ObjectMeta, v1beta1.StashKey)
@@ -237,6 +305,65 @@ func ExtractRestoreInvokerInfo(stashClient cs.Interface, invokerType, invokerNam
 				return false, err
 			}
 			return kmapi.IsConditionTrue(restoreSession.Status.Conditions, condType), nil
+		}
+
+		invoker.NextInOrder = func(ref v1beta1.TargetRef, targets []v1beta1.RestoreMemberStatus) bool {
+			for i := range targets {
+				if targetMatched(ref, targets[i].Ref) {
+					break
+				}
+				if targets[i].Phase != v1beta1.TargetRestoreSucceeded {
+					return false
+				}
+			}
+			return true
+		}
+
+		invoker.GetPhase = func() (v1beta1.RestorePhase, error) {
+			restoreSession, err := stashClient.StashV1beta1().RestoreSessions(namespace).Get(context.TODO(), invokerName, metav1.GetOptions{})
+			if err != nil {
+				return v1beta1.RestorePhaseUnknown, err
+			}
+			// RestoreSession phase is empty or "Pending" then return it. controller will process accordingly
+			if restoreSession.Status.TotalHosts == nil ||
+				restoreSession.Status.Phase == "" ||
+				restoreSession.Status.Phase == v1beta1.RestorePending {
+				return v1beta1.RestorePending, nil
+			}
+
+			// all hosts hasn't completed it's restore process. RestoreSession phase must be "Running".
+			if *restoreSession.Status.TotalHosts != int32(len(restoreSession.Status.Stats)) {
+				return v1beta1.RestoreRunning, nil
+			}
+
+			// check if any of the host has failed to restore. if any of them has failed, then consider entire restore session as a failure.
+			for _, host := range restoreSession.Status.Stats {
+				if host.Phase == v1beta1.HostRestoreFailed {
+					return v1beta1.RestoreFailed, fmt.Errorf("restore failed for host: %s. Reason: %s", host.Hostname, host.Error)
+				}
+			}
+
+			// check if any of the host phase is "Unknown". if any of their phase is "Unknown", then consider entire restore session phase is unknown.
+			for _, host := range restoreSession.Status.Stats {
+				if host.Phase == v1beta1.HostRestoreUnknown {
+					return v1beta1.RestorePhaseUnknown, fmt.Errorf("restore phase is 'Unknown' for host: %s. Reason: %s", host.Hostname, host.Error)
+				}
+			}
+
+			// restore has been completed successfully
+			return v1beta1.RestoreSucceeded, nil
+		}
+		invoker.SetPhase = func(phase v1beta1.RestorePhase) error {
+			// TODO
+			return nil
+		}
+		invoker.GetTargetPhase = func(ref v1beta1.TargetRef) (v1beta1.RestoreTargetPhase, error) {
+			// TODO
+			return v1beta1.TargetRestorePending, nil
+		}
+		invoker.SetTargetPhase = func(ref v1beta1.TargetRef, phase v1beta1.RestoreTargetPhase) error {
+			// TODO
+			return nil
 		}
 	default:
 		return invoker, fmt.Errorf("failed to extract invoker info. Reason: unknown invoker")

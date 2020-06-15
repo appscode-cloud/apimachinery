@@ -57,6 +57,7 @@ type Invoker struct {
 	RuntimeSettings    ofst.RuntimeSettings
 	BackupHistoryLimit *int32
 	TargetsInfo        []TargetInfo
+	ExecutionOrder     v1beta1.ExecutionOrder
 	Hooks              *v1beta1.BackupHooks
 	ObjectRef          *core.ObjectReference
 	OwnerRef           *metav1.OwnerReference
@@ -67,6 +68,7 @@ type Invoker struct {
 	GetCondition       func(*v1beta1.TargetRef, string) (int, *kmapi.Condition, error)
 	SetCondition       func(*v1beta1.TargetRef, kmapi.Condition) error
 	IsConditionTrue    func(*v1beta1.TargetRef, string) (bool, error)
+	NextInOrder        func(v1beta1.TargetRef, []v1beta1.Target) bool
 }
 
 func ExtractBackupInvokerInfo(stashClient cs.Interface, invokerType, invokerName, namespace string) (Invoker, error) {
@@ -93,6 +95,7 @@ func ExtractBackupInvokerInfo(stashClient cs.Interface, invokerType, invokerName
 		invoker.RuntimeSettings = backupBatch.Spec.RuntimeSettings
 		invoker.BackupHistoryLimit = backupBatch.Spec.BackupHistoryLimit
 		invoker.Hooks = backupBatch.Spec.Hooks
+		invoker.ExecutionOrder = backupBatch.Spec.ExecutionOrder
 		invoker.OwnerRef = metav1.NewControllerRef(backupBatch, v1beta1.SchemeGroupVersion.WithKind(v1beta1.ResourceKindBackupBatch))
 		invoker.ObjectRef, err = reference.GetReference(stash_scheme.Scheme, backupBatch)
 		if err != nil {
@@ -171,6 +174,17 @@ func ExtractBackupInvokerInfo(stashClient cs.Interface, invokerType, invokerName
 				return isMemberConditionTrue(backupBatch.Status.MemberConditions, *target, condType), nil
 			}
 			return kmapi.IsConditionTrue(backupBatch.Status.Conditions, condType), nil
+		}
+		invoker.NextInOrder = func(ref v1beta1.TargetRef, targets []v1beta1.Target) bool {
+			for i := range targets {
+				if targetMatched(ref, targets[i].Ref) {
+					break
+				}
+				if targets[i].Phase != v1beta1.TargetBackupSucceeded {
+					return false
+				}
+			}
+			return true
 		}
 	case v1beta1.ResourceKindBackupConfiguration:
 		// get BackupConfiguration
@@ -253,6 +267,17 @@ func ExtractBackupInvokerInfo(stashClient cs.Interface, invokerType, invokerName
 				return false, err
 			}
 			return kmapi.IsConditionTrue(backupConfig.Status.Conditions, condType), nil
+		}
+		invoker.NextInOrder = func(ref v1beta1.TargetRef, targets []v1beta1.Target) bool {
+			for i := range targets {
+				if targetMatched(ref, targets[i].Ref) {
+					break
+				}
+				if targets[i].Phase != v1beta1.TargetBackupSucceeded {
+					return false
+				}
+			}
+			return true
 		}
 	default:
 		return invoker, fmt.Errorf("failed to extract invoker info. Reason: unknown invoker")
