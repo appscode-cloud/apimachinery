@@ -66,6 +66,11 @@ type BackupTarget struct {
 	// Use this field only if the "driver" field is set to "volumeSnapshotter".
 	// +optional
 	VolumeSnapshotClassName string `json:"snapshotClassName,omitempty" protobuf:"bytes,5,opt,name=snapshotClassName"`
+	// Exclude specifies a list of patterns for the files to ignore during backup.
+	// Stash will ignore those files that match the specified patterns.
+	// Supported only for "Restic" driver
+	// +optional
+	Exclude []string `json:"exclude,omitempty" protobuf:"bytes,7,rep,name=exclude"`
 }
 
 type RestoreTarget struct {
@@ -109,6 +114,16 @@ type Rule struct {
 	// Don't specify if you have specified snapshots field.
 	// +optional
 	Paths []string `json:"paths,omitempty" protobuf:"bytes,4,rep,name=paths"`
+	// Exclude specifies a list of patterns for the files to ignore during restore.
+	// Stash will only restore the files that does not match those patterns.
+	// Supported only for "Restic" driver
+	// +optional
+	Exclude []string `json:"exclude,omitempty" protobuf:"bytes,5,rep,name=exclude"`
+	// Include specifies a list of patterns for the files to restore.
+	// Stash will only restore the files that match those patterns.
+	// Supported only for "Restic" driver
+	// +optional
+	Include []string `json:"include,omitempty" protobuf:"bytes,6,rep,name=include"`
 }
 
 type TargetRef struct {

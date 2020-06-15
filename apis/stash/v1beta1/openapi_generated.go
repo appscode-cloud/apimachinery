@@ -18411,6 +18411,20 @@ func schema_apimachinery_apis_stash_v1beta1_BackupTarget(ref common.ReferenceCal
 							Format:      "",
 						},
 					},
+					"exclude": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Exclude specifies a list of patterns for the files to ignore during backup. Stash will ignore those files that match the specified patterns. Supported only for \"Restic\" driver",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"string"},
+										Format: "",
+									},
+								},
+							},
+						},
+					},
 				},
 			},
 		},
@@ -19564,6 +19578,34 @@ func schema_apimachinery_apis_stash_v1beta1_Rule(ref common.ReferenceCallback) c
 					"paths": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Paths specifies the paths to be restored for the hosts under this rule. Don't specify if you have specified snapshots field.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"string"},
+										Format: "",
+									},
+								},
+							},
+						},
+					},
+					"exclude": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Exclude specifies a list of patterns for the files to ignore during restore. Stash will only restore the files that does not match those patterns. Supported only for \"Restic\" driver",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"string"},
+										Format: "",
+									},
+								},
+							},
+						},
+					},
+					"include": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Include specifies a list of patterns for the files to restore. Stash will only restore the files that match those patterns. Supported only for \"Restic\" driver",
 							Type:        []string{"array"},
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{

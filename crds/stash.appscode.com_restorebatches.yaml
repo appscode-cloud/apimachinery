@@ -2771,6 +2771,22 @@ spec:
                           different hosts
                         items:
                           properties:
+                            exclude:
+                              description: Exclude specifies a list of patterns for
+                                the files to ignore during restore. Stash will only
+                                restore the files that does not match those patterns.
+                                Supported only for "Restic" driver
+                              items:
+                                type: string
+                              type: array
+                            include:
+                              description: Include specifies a list of patterns for
+                                the files to restore. Stash will only restore the
+                                files that match those patterns. Supported only for
+                                "Restic" driver
+                              items:
+                                type: string
+                              type: array
                             paths:
                               description: Paths specifies the paths to be restored
                                 for the hosts under this rule. Don't specify if you

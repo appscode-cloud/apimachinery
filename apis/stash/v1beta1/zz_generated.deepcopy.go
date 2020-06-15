@@ -552,6 +552,11 @@ func (in *BackupTarget) DeepCopyInto(out *BackupTarget) {
 		*out = new(int32)
 		**out = **in
 	}
+	if in.Exclude != nil {
+		in, out := &in.Exclude, &out.Exclude
+		*out = make([]string, len(*in))
+		copy(*out, *in)
+	}
 	return
 }
 
@@ -1221,6 +1226,16 @@ func (in *Rule) DeepCopyInto(out *Rule) {
 	}
 	if in.Paths != nil {
 		in, out := &in.Paths, &out.Paths
+		*out = make([]string, len(*in))
+		copy(*out, *in)
+	}
+	if in.Exclude != nil {
+		in, out := &in.Exclude, &out.Exclude
+		*out = make([]string, len(*in))
+		copy(*out, *in)
+	}
+	if in.Include != nil {
+		in, out := &in.Include, &out.Include
 		*out = make([]string, len(*in))
 		copy(*out, *in)
 	}

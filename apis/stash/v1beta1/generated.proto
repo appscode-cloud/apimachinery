@@ -359,6 +359,12 @@ message BackupTarget {
   // Use this field only if the "driver" field is set to "volumeSnapshotter".
   // +optional
   optional string snapshotClassName = 5;
+
+  // Exclude specifies a list of patterns for the files to ignore during backup.
+  // Stash will ignore those files that match the specified patterns.
+  // Supported only for "Restic" driver
+  // +optional
+  repeated string exclude = 7;
 }
 
 message EmptyDirSettings {
@@ -778,6 +784,18 @@ message Rule {
   // Don't specify if you have specified snapshots field.
   // +optional
   repeated string paths = 4;
+
+  // Exclude specifies a list of patterns for the files to ignore during restore.
+  // Stash will only restore the files that does not match those patterns.
+  // Supported only for "Restic" driver
+  // +optional
+  repeated string exclude = 5;
+
+  // Include specifies a list of patterns for the files to restore.
+  // Stash will only restore the files that match those patterns.
+  // Supported only for "Restic" driver
+  // +optional
+  repeated string include = 6;
 }
 
 message SnapshotStats {

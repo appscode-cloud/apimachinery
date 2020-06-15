@@ -11582,6 +11582,13 @@
           "description": "Alias represents the identifier of the backed up data in the repository. This will be used as `hostname` or will be used to generate the `hostname` for the restic repository.",
           "type": "string"
         },
+        "exclude": {
+          "description": "Exclude specifies a list of patterns for the files to ignore during backup. Stash will ignore those files that match the specified patterns. Supported only for \"Restic\" driver",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
         "paths": {
           "description": "Paths specify the file paths to backup",
           "type": "array",
@@ -12235,6 +12242,20 @@
     "dev.appscode.stash.apimachinery.apis.stash.v1beta1.Rule": {
       "type": "object",
       "properties": {
+        "exclude": {
+          "description": "Exclude specifies a list of patterns for the files to ignore during restore. Stash will only restore the files that does not match those patterns. Supported only for \"Restic\" driver",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "include": {
+          "description": "Include specifies a list of patterns for the files to restore. Stash will only restore the files that match those patterns. Supported only for \"Restic\" driver",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
         "paths": {
           "description": "Paths specifies the paths to be restored for the hosts under this rule. Don't specify if you have specified snapshots field.",
           "type": "array",
