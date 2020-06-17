@@ -89,10 +89,11 @@ type RestoreBatchStatus struct {
 type RestoreTargetPhase string
 
 const (
-	TargetRestorePending   RestoreTargetPhase = "Pending"
-	TargetRestoreRunning   RestoreTargetPhase = "Running"
-	TargetRestoreSucceeded RestoreTargetPhase = "Succeeded"
-	TargetRestoreFailed    RestoreTargetPhase = "Failed"
+	TargetRestorePending      RestoreTargetPhase = "Pending"
+	TargetRestoreRunning      RestoreTargetPhase = "Running"
+	TargetRestoreSucceeded    RestoreTargetPhase = "Succeeded"
+	TargetRestoreFailed       RestoreTargetPhase = "Failed"
+	TargetRestorePhaseUnknown RestoreTargetPhase = "Unknown"
 )
 
 type RestoreMemberStatus struct {

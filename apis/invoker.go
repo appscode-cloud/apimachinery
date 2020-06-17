@@ -177,7 +177,7 @@ func ExtractBackupInvokerInfo(stashClient cs.Interface, invokerType, invokerName
 		}
 		invoker.NextInOrder = func(ref v1beta1.TargetRef, targets []v1beta1.Target) bool {
 			for i := range targets {
-				if targetMatched(ref, targets[i].Ref) {
+				if targetMatched(ref, targets[i].Ref) && targets[i].Phase == "" {
 					break
 				}
 				if targets[i].Phase != v1beta1.TargetBackupSucceeded {
@@ -270,7 +270,7 @@ func ExtractBackupInvokerInfo(stashClient cs.Interface, invokerType, invokerName
 		}
 		invoker.NextInOrder = func(ref v1beta1.TargetRef, targets []v1beta1.Target) bool {
 			for i := range targets {
-				if targetMatched(ref, targets[i].Ref) {
+				if targetMatched(ref, targets[i].Ref) && targets[i].Phase == "" {
 					break
 				}
 				if targets[i].Phase != v1beta1.TargetBackupSucceeded {

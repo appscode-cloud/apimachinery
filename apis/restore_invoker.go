@@ -19,6 +19,7 @@ package apis
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"stash.appscode.dev/apimachinery/apis/stash/v1beta1"
 	cs "stash.appscode.dev/apimachinery/client/clientset/versioned"
@@ -33,6 +34,11 @@ import (
 	core_util "kmodules.xyz/client-go/core/v1"
 	"kmodules.xyz/client-go/meta"
 	ofst "kmodules.xyz/offshoot-api/api/v1"
+)
+
+const (
+	EventSourceRestoreBatchController   = "RestoreBatch Controller"
+	EventSourceRestoreSessionController = "RestoreSession Controller"
 )
 
 type RestoreTargetInfo struct {
@@ -73,11 +79,9 @@ type RestoreInvoker struct {
 	IsConditionTrue func(*v1beta1.TargetRef, string) (bool, error)
 	NextInOrder     func(v1beta1.TargetRef, []v1beta1.RestoreMemberStatus) bool
 
-	GetPhase       func() (v1beta1.RestorePhase, error)
-	SetPhase       func(phase v1beta1.RestorePhase) error
-	GetTargetPhase func(v1beta1.TargetRef) (v1beta1.RestoreTargetPhase, error)
-	SetTargetPhase func(v1beta1.TargetRef, v1beta1.RestoreTargetPhase) error
-	CreateEvent    func(string, string, string, string) error
+	UpdateTargetStatus func(v1beta1.RestoreMemberStatus) error
+	UpdateRestorePhase func(v1beta1.RestorePhase, string) error
+	CreateEvent        func(string, string, string) error
 }
 
 func ExtractRestoreInvokerInfo(kubeClient kubernetes.Interface, stashClient cs.Interface, invokerType, invokerName, namespace string) (RestoreInvoker, error) {
@@ -188,7 +192,7 @@ func ExtractRestoreInvokerInfo(kubeClient kubernetes.Interface, stashClient cs.I
 
 		invoker.NextInOrder = func(ref v1beta1.TargetRef, targets []v1beta1.RestoreMemberStatus) bool {
 			for i := range targets {
-				if targetMatched(ref, targets[i].Ref) {
+				if targetMatched(ref, targets[i].Ref) && targets[i].Phase == "" {
 					break
 				}
 				if targets[i].Phase != v1beta1.TargetRestoreSucceeded {
@@ -197,23 +201,55 @@ func ExtractRestoreInvokerInfo(kubeClient kubernetes.Interface, stashClient cs.I
 			}
 			return true
 		}
+		invoker.UpdateTargetStatus = func(memberStatus v1beta1.RestoreMemberStatus) error {
+			_, err = v1beta1_util.UpdateRestoreBatchStatus(
+				context.TODO(),
+				stashClient.StashV1beta1(),
+				invoker.ObjectMeta,
+				func(in *v1beta1.RestoreBatchStatus) *v1beta1.RestoreBatchStatus {
+					in.Members = upsertRestoreMemberStatus(in.Members, memberStatus)
+					return in
+				},
+				metav1.UpdateOptions{},
+			)
+			return err
+		}
+		invoker.UpdateRestorePhase = func(phase v1beta1.RestorePhase, sessionDuration string) error {
+			_, err = v1beta1_util.UpdateRestoreBatchStatus(
+				context.TODO(),
+				stashClient.StashV1beta1(),
+				invoker.ObjectMeta,
+				func(in *v1beta1.RestoreBatchStatus) *v1beta1.RestoreBatchStatus {
+					if phase != "" {
+						in.Phase = phase
+					}
+					if sessionDuration != "" {
+						in.SessionDuration = sessionDuration
+					}
+					return in
+				},
+				metav1.UpdateOptions{},
+			)
+			return err
+		}
+		invoker.CreateEvent = func(eventType string, reason string, message string) error {
+			t := metav1.Time{Time: time.Now()}
 
-		invoker.GetPhase = func() (v1beta1.RestorePhase, error) {
-
-			// TODO
-			return v1beta1.RestorePending, nil
-		}
-		invoker.SetPhase = func(phase v1beta1.RestorePhase) error {
-			// TODO
-			return nil
-		}
-		invoker.GetTargetPhase = func(ref v1beta1.TargetRef) (v1beta1.RestoreTargetPhase, error) {
-			// TODO
-			return v1beta1.TargetRestorePending, nil
-		}
-		invoker.SetTargetPhase = func(ref v1beta1.TargetRef, phase v1beta1.RestoreTargetPhase) error {
-			// TODO
-			return nil
+			_, err := kubeClient.CoreV1().Events(invoker.ObjectMeta.Namespace).Create(context.TODO(), &core.Event{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      fmt.Sprintf("%v.%x", invoker.ObjectRef.Name, t.UnixNano()),
+					Namespace: invoker.ObjectRef.Namespace,
+				},
+				InvolvedObject: *invoker.ObjectRef,
+				Reason:         reason,
+				Message:        message,
+				FirstTimestamp: t,
+				LastTimestamp:  t,
+				Count:          1,
+				Type:           eventType,
+				Source:         core.EventSource{Component: EventSourceRestoreBatchController},
+			}, metav1.CreateOptions{})
+			return err
 		}
 	case v1beta1.ResourceKindRestoreSession:
 		// get RestoreSession
@@ -309,7 +345,7 @@ func ExtractRestoreInvokerInfo(kubeClient kubernetes.Interface, stashClient cs.I
 
 		invoker.NextInOrder = func(ref v1beta1.TargetRef, targets []v1beta1.RestoreMemberStatus) bool {
 			for i := range targets {
-				if targetMatched(ref, targets[i].Ref) {
+				if targetMatched(ref, targets[i].Ref) && targets[i].Phase == "" {
 					break
 				}
 				if targets[i].Phase != v1beta1.TargetRestoreSucceeded {
@@ -319,51 +355,57 @@ func ExtractRestoreInvokerInfo(kubeClient kubernetes.Interface, stashClient cs.I
 			return true
 		}
 
-		invoker.GetPhase = func() (v1beta1.RestorePhase, error) {
-			restoreSession, err := stashClient.StashV1beta1().RestoreSessions(namespace).Get(context.TODO(), invokerName, metav1.GetOptions{})
-			if err != nil {
-				return v1beta1.RestorePhaseUnknown, err
-			}
-			// RestoreSession phase is empty or "Pending" then return it. controller will process accordingly
-			if restoreSession.Status.TotalHosts == nil ||
-				restoreSession.Status.Phase == "" ||
-				restoreSession.Status.Phase == v1beta1.RestorePending {
-				return v1beta1.RestorePending, nil
-			}
-
-			// all hosts hasn't completed it's restore process. RestoreSession phase must be "Running".
-			if *restoreSession.Status.TotalHosts != int32(len(restoreSession.Status.Stats)) {
-				return v1beta1.RestoreRunning, nil
-			}
-
-			// check if any of the host has failed to restore. if any of them has failed, then consider entire restore session as a failure.
-			for _, host := range restoreSession.Status.Stats {
-				if host.Phase == v1beta1.HostRestoreFailed {
-					return v1beta1.RestoreFailed, fmt.Errorf("restore failed for host: %s. Reason: %s", host.Hostname, host.Error)
-				}
-			}
-
-			// check if any of the host phase is "Unknown". if any of their phase is "Unknown", then consider entire restore session phase is unknown.
-			for _, host := range restoreSession.Status.Stats {
-				if host.Phase == v1beta1.HostRestoreUnknown {
-					return v1beta1.RestorePhaseUnknown, fmt.Errorf("restore phase is 'Unknown' for host: %s. Reason: %s", host.Hostname, host.Error)
-				}
-			}
-
-			// restore has been completed successfully
-			return v1beta1.RestoreSucceeded, nil
+		invoker.UpdateTargetStatus = func(memberStatus v1beta1.RestoreMemberStatus) error {
+			_, err = v1beta1_util.UpdateRestoreSessionStatus(
+				context.TODO(),
+				stashClient.StashV1beta1(),
+				invoker.ObjectMeta,
+				func(in *v1beta1.RestoreSessionStatus) *v1beta1.RestoreSessionStatus {
+					in.TotalHosts = memberStatus.TotalHosts
+					in.Stats = memberStatus.Stats
+					in.Conditions = upsertConditions(in.Conditions, memberStatus.Conditions)
+					return in
+				},
+				metav1.UpdateOptions{},
+			)
+			return err
 		}
-		invoker.SetPhase = func(phase v1beta1.RestorePhase) error {
-			// TODO
-			return nil
+		invoker.UpdateRestorePhase = func(phase v1beta1.RestorePhase, sessionDuration string) error {
+			_, err = v1beta1_util.UpdateRestoreSessionStatus(
+				context.TODO(),
+				stashClient.StashV1beta1(),
+				invoker.ObjectMeta,
+				func(in *v1beta1.RestoreSessionStatus) *v1beta1.RestoreSessionStatus {
+					if phase != "" {
+						in.Phase = phase
+					}
+					if sessionDuration != "" {
+						in.SessionDuration = sessionDuration
+					}
+					return in
+				},
+				metav1.UpdateOptions{},
+			)
+			return err
 		}
-		invoker.GetTargetPhase = func(ref v1beta1.TargetRef) (v1beta1.RestoreTargetPhase, error) {
-			// TODO
-			return v1beta1.TargetRestorePending, nil
-		}
-		invoker.SetTargetPhase = func(ref v1beta1.TargetRef, phase v1beta1.RestoreTargetPhase) error {
-			// TODO
-			return nil
+		invoker.CreateEvent = func(eventType string, reason string, message string) error {
+			t := metav1.Time{Time: time.Now()}
+
+			_, err := kubeClient.CoreV1().Events(invoker.ObjectMeta.Namespace).Create(context.TODO(), &core.Event{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      fmt.Sprintf("%v.%x", invoker.ObjectRef.Name, t.UnixNano()),
+					Namespace: invoker.ObjectRef.Namespace,
+				},
+				InvolvedObject: *invoker.ObjectRef,
+				Reason:         reason,
+				Message:        message,
+				FirstTimestamp: t,
+				LastTimestamp:  t,
+				Count:          1,
+				Type:           eventType,
+				Source:         core.EventSource{Component: EventSourceRestoreSessionController},
+			}, metav1.CreateOptions{})
+			return err
 		}
 	default:
 		return invoker, fmt.Errorf("failed to extract invoker info. Reason: unknown invoker")
@@ -418,4 +460,23 @@ func isRestoreMemberConditionTrue(status []v1beta1.RestoreMemberStatus, target v
 	}
 	// Member is not present in the list, so the condition is false
 	return false
+}
+
+func upsertRestoreMemberStatus(cur []v1beta1.RestoreMemberStatus, new v1beta1.RestoreMemberStatus) []v1beta1.RestoreMemberStatus {
+	// if the member status already exist, then update it
+	for i := range cur {
+		if targetMatched(cur[i].Ref, new.Ref) {
+			cur[i] = new
+		}
+	}
+	// the member status does not exist. so, add new entry.
+	cur = append(cur, new)
+	return cur
+}
+
+func upsertConditions(cur []kmapi.Condition, new []kmapi.Condition) []kmapi.Condition {
+	for i := range new {
+		cur = kmapi.SetCondition(cur, new[i])
+	}
+	return cur
 }

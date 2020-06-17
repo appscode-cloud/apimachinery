@@ -73,6 +73,7 @@ const (
 type TargetPhase string
 
 const (
+	TargetBackupPending   TargetPhase = "Pending"
 	TargetBackupSucceeded TargetPhase = "Succeeded"
 	TargetBackupRunning   TargetPhase = "Running"
 	TargetBackupFailed    TargetPhase = "Failed"

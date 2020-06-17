@@ -300,7 +300,7 @@ func newRepositoryMetrics(labels prometheus.Labels) *RepositoryMetrics {
 	}
 }
 
-func newRestoreSessionMetrics(labels prometheus.Labels) *RestoreMetrics {
+func newRestoreMetrics(labels prometheus.Labels) *RestoreMetrics {
 	return &RestoreMetrics{
 		RestoreSessionMetrics: &RestoreSessionMetrics{
 			SessionSuccess: prometheus.NewGauge(
@@ -492,53 +492,57 @@ func (metricOpt *MetricsOptions) SendBackupHostMetrics(config *rest.Config, invo
 	return metricOpt.sendMetrics(registry, metricOpt.JobName)
 }
 
-// SendRestoreSessionMetrics send restore session metrics to the Pushgateway
-func (metricOpt *MetricsOptions) SendRestoreSessionMetrics(config *rest.Config, restoreSession *api_v1beta1.RestoreSession) error {
+// SendRestoreMetrics send restore session metrics to the Pushgateway
+func (metricOpt *MetricsOptions) SendRestoreMetrics(config *rest.Config, invoker apis.RestoreInvoker) error {
 	// create metric registry
 	registry := prometheus.NewRegistry()
 
-	// generate metrics labels
-	labels, err := restoreMetricLabels(config, restoreSession, metricOpt.Labels)
-	if err != nil {
-		return err
-	}
-	// create metrics
-	metrics := newRestoreSessionMetrics(labels)
-	status := restoreSession.Status
+	for i := range invoker.TargetsInfo {
+		targetInfo := invoker.TargetsInfo[i]
 
-	if status.Phase == api_v1beta1.RestoreSucceeded {
-		// mark entire restore session as succeeded
-		metrics.RestoreSessionMetrics.SessionSuccess.Set(1)
-
-		// set total time taken to complete the restore session
-		duration, err := time.ParseDuration(status.SessionDuration)
+		// generate metrics labels
+		labels, err := restoreMetricLabels(config, invoker, targetInfo, metricOpt.Labels)
 		if err != nil {
 			return err
 		}
-		metrics.RestoreSessionMetrics.SessionDuration.Set(duration.Seconds())
+		// create metrics
+		metrics := newRestoreMetrics(labels)
+		status := invoker.Status
 
-		// set total number of host that was restored in this restore session
-		if status.TotalHosts != nil {
-			metrics.RestoreSessionMetrics.HostCount.Set(float64(*status.TotalHosts))
+		if status.Phase == api_v1beta1.RestoreSucceeded {
+			// mark entire restore session as succeeded
+			metrics.RestoreSessionMetrics.SessionSuccess.Set(1)
+
+			// set total time taken to complete the restore session
+			duration, err := time.ParseDuration(status.SessionDuration)
+			if err != nil {
+				return err
+			}
+			metrics.RestoreSessionMetrics.SessionDuration.Set(duration.Seconds())
+
+			// set total number of host that was restored in this restore session
+			//if status.TotalHosts != nil {
+			//	metrics.RestoreSessionMetrics.HostCount.Set(float64(*status.TotalHosts))
+			//}
+
+			// register metrics to the registry
+			registry.MustRegister(
+				metrics.RestoreSessionMetrics.SessionSuccess,
+				metrics.RestoreSessionMetrics.SessionDuration,
+				metrics.RestoreSessionMetrics.HostCount,
+			)
+		} else {
+			// mark entire restore session as failed
+			metrics.RestoreSessionMetrics.SessionSuccess.Set(0)
+			registry.MustRegister(metrics.RestoreSessionMetrics.SessionSuccess)
 		}
-
-		// register metrics to the registry
-		registry.MustRegister(
-			metrics.RestoreSessionMetrics.SessionSuccess,
-			metrics.RestoreSessionMetrics.SessionDuration,
-			metrics.RestoreSessionMetrics.HostCount,
-		)
-	} else {
-		// mark entire restore session as failed
-		metrics.RestoreSessionMetrics.SessionSuccess.Set(0)
-		registry.MustRegister(metrics.RestoreSessionMetrics.SessionSuccess)
 	}
 	// send metrics to the pushgateway
 	return metricOpt.sendMetrics(registry, metricOpt.JobName)
 }
 
 // SendRestoreHostMetrics send restore metrics for individual hosts to the Pushgateway
-func (metricOpt *MetricsOptions) SendRestoreHostMetrics(config *rest.Config, restoreSession *api_v1beta1.RestoreSession, restoreOutput *RestoreOutput) error {
+func (metricOpt *MetricsOptions) SendRestoreHostMetrics(config *rest.Config, invoker apis.RestoreInvoker, targetInfo apis.RestoreTargetInfo, restoreOutput *RestoreOutput) error {
 	if restoreOutput == nil {
 		return fmt.Errorf("invalid restore output. Restore output shouldn't be nil")
 	}
@@ -546,7 +550,7 @@ func (metricOpt *MetricsOptions) SendRestoreHostMetrics(config *rest.Config, res
 	// create metric registry
 	registry := prometheus.NewRegistry()
 
-	labels, err := restoreMetricLabels(config, restoreSession, metricOpt.Labels)
+	labels, err := restoreMetricLabels(config, invoker, targetInfo, metricOpt.Labels)
 	if err != nil {
 		return err
 	}
@@ -695,28 +699,26 @@ func backupMetricLabels(config *rest.Config, invoker apis.Invoker, targetRef api
 	return promLabels, nil
 }
 
-func restoreMetricLabels(config *rest.Config, restoreSession *api_v1beta1.RestoreSession, userProvidedLabels []string) (prometheus.Labels, error) {
+func restoreMetricLabels(config *rest.Config, invoker apis.RestoreInvoker, targetInfo apis.RestoreTargetInfo, userProvidedLabels []string) (prometheus.Labels, error) {
 	// add user provided labels
 	promLabels := parseUserProvidedLabels(userProvidedLabels)
 
 	// insert target information as metrics label
-	if restoreSession != nil {
-		if restoreSession.Spec.Driver == api_v1beta1.VolumeSnapshotter {
-			promLabels = upsertLabel(promLabels, volumeSnapshotterLabels())
-		} else {
-			promLabels[MetricsLabelDriver] = string(api_v1beta1.ResticSnapshotter)
-			// insert restore target specific metrics
-			if restoreSession.Spec.Target != nil {
-				labels, err := targetLabels(config, restoreSession.Spec.Target.Ref, restoreSession.Namespace)
-				if err != nil {
-					return nil, err
-				}
-				promLabels = upsertLabel(promLabels, labels)
+	if invoker.Driver == api_v1beta1.VolumeSnapshotter {
+		promLabels = upsertLabel(promLabels, volumeSnapshotterLabels())
+	} else {
+		promLabels[MetricsLabelDriver] = string(api_v1beta1.ResticSnapshotter)
+		// insert restore target specific metrics
+		if targetInfo.Target != nil {
+			labels, err := targetLabels(config, targetInfo.Target.Ref, invoker.ObjectMeta.Namespace)
+			if err != nil {
+				return nil, err
 			}
-			promLabels[MetricsLabelRepository] = restoreSession.Spec.Repository.Name
+			promLabels = upsertLabel(promLabels, labels)
 		}
-		promLabels[MetricsLabelNamespace] = restoreSession.Namespace
+		promLabels[MetricsLabelRepository] = invoker.Repository
 	}
+	promLabels[MetricsLabelNamespace] = invoker.ObjectMeta.Namespace
 	return promLabels, nil
 }
 
