@@ -81,7 +81,7 @@ type RestoreInvoker struct {
 
 	UpdateTargetStatus func(v1beta1.RestoreMemberStatus) error
 	UpdateRestorePhase func(v1beta1.RestorePhase, string) error
-	CreateEvent        func(string, string, string) error
+	CreateEvent        func(eventType, source, reason, message string) error
 }
 
 func ExtractRestoreInvokerInfo(kubeClient kubernetes.Interface, stashClient cs.Interface, invokerType, invokerName, namespace string) (RestoreInvoker, error) {
@@ -192,7 +192,7 @@ func ExtractRestoreInvokerInfo(kubeClient kubernetes.Interface, stashClient cs.I
 
 		invoker.NextInOrder = func(ref v1beta1.TargetRef, targets []v1beta1.RestoreMemberStatus) bool {
 			for i := range targets {
-				if targetMatched(ref, targets[i].Ref) && targets[i].Phase == "" {
+				if TargetMatched(ref, targets[i].Ref) && targets[i].Phase == "" {
 					break
 				}
 				if targets[i].Phase != v1beta1.TargetRestoreSucceeded {
@@ -232,9 +232,12 @@ func ExtractRestoreInvokerInfo(kubeClient kubernetes.Interface, stashClient cs.I
 			)
 			return err
 		}
-		invoker.CreateEvent = func(eventType string, reason string, message string) error {
+		invoker.CreateEvent = func(eventType, source, reason, message string) error {
 			t := metav1.Time{Time: time.Now()}
 
+			if source == "" {
+				source = EventSourceRestoreBatchController
+			}
 			_, err := kubeClient.CoreV1().Events(invoker.ObjectMeta.Namespace).Create(context.TODO(), &core.Event{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      fmt.Sprintf("%v.%x", invoker.ObjectRef.Name, t.UnixNano()),
@@ -247,7 +250,7 @@ func ExtractRestoreInvokerInfo(kubeClient kubernetes.Interface, stashClient cs.I
 				LastTimestamp:  t,
 				Count:          1,
 				Type:           eventType,
-				Source:         core.EventSource{Component: EventSourceRestoreBatchController},
+				Source:         core.EventSource{Component: source},
 			}, metav1.CreateOptions{})
 			return err
 		}
@@ -345,7 +348,7 @@ func ExtractRestoreInvokerInfo(kubeClient kubernetes.Interface, stashClient cs.I
 
 		invoker.NextInOrder = func(ref v1beta1.TargetRef, targets []v1beta1.RestoreMemberStatus) bool {
 			for i := range targets {
-				if targetMatched(ref, targets[i].Ref) && targets[i].Phase == "" {
+				if TargetMatched(ref, targets[i].Ref) && targets[i].Phase == "" {
 					break
 				}
 				if targets[i].Phase != v1beta1.TargetRestoreSucceeded {
@@ -362,7 +365,7 @@ func ExtractRestoreInvokerInfo(kubeClient kubernetes.Interface, stashClient cs.I
 				invoker.ObjectMeta,
 				func(in *v1beta1.RestoreSessionStatus) *v1beta1.RestoreSessionStatus {
 					in.TotalHosts = memberStatus.TotalHosts
-					in.Stats = memberStatus.Stats
+					in.Stats = upsertRestoreHostStatus(in.Stats, memberStatus.Stats)
 					in.Conditions = upsertConditions(in.Conditions, memberStatus.Conditions)
 					return in
 				},
@@ -388,9 +391,11 @@ func ExtractRestoreInvokerInfo(kubeClient kubernetes.Interface, stashClient cs.I
 			)
 			return err
 		}
-		invoker.CreateEvent = func(eventType string, reason string, message string) error {
+		invoker.CreateEvent = func(eventType, source, reason, message string) error {
 			t := metav1.Time{Time: time.Now()}
-
+			if source == "" {
+				source = EventSourceRestoreSessionController
+			}
 			_, err := kubeClient.CoreV1().Events(invoker.ObjectMeta.Namespace).Create(context.TODO(), &core.Event{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      fmt.Sprintf("%v.%x", invoker.ObjectRef.Name, t.UnixNano()),
@@ -403,7 +408,7 @@ func ExtractRestoreInvokerInfo(kubeClient kubernetes.Interface, stashClient cs.I
 				LastTimestamp:  t,
 				Count:          1,
 				Type:           eventType,
-				Source:         core.EventSource{Component: EventSourceRestoreSessionController},
+				Source:         core.EventSource{Component: source},
 			}, metav1.CreateOptions{})
 			return err
 		}
@@ -416,7 +421,7 @@ func ExtractRestoreInvokerInfo(kubeClient kubernetes.Interface, stashClient cs.I
 func hasRestoreMemberCondition(status []v1beta1.RestoreMemberStatus, target v1beta1.TargetRef, condType string) bool {
 	// If the target is present in the list, then return the respective value
 	for i := range status {
-		if targetMatched(status[i].Ref, target) {
+		if TargetMatched(status[i].Ref, target) {
 			return kmapi.HasCondition(status[i].Conditions, condType)
 		}
 	}
@@ -427,7 +432,7 @@ func hasRestoreMemberCondition(status []v1beta1.RestoreMemberStatus, target v1be
 func getRestoreMemberCondition(status []v1beta1.RestoreMemberStatus, target v1beta1.TargetRef, condType string) (int, *kmapi.Condition) {
 	// If the target is present in the list, then return the respective condition
 	for i := range status {
-		if targetMatched(status[i].Ref, target) {
+		if TargetMatched(status[i].Ref, target) {
 			return kmapi.GetCondition(status[i].Conditions, condType)
 		}
 	}
@@ -438,7 +443,7 @@ func getRestoreMemberCondition(status []v1beta1.RestoreMemberStatus, target v1be
 func setRestoreMemberCondition(status []v1beta1.RestoreMemberStatus, target v1beta1.TargetRef, newCondition kmapi.Condition) []v1beta1.RestoreMemberStatus {
 	// If the target is already exist in the list, update its condition
 	for i := range status {
-		if targetMatched(status[i].Ref, target) {
+		if TargetMatched(status[i].Ref, target) {
 			status[i].Conditions = kmapi.SetCondition(status[i].Conditions, newCondition)
 			return status
 		}
@@ -454,7 +459,7 @@ func setRestoreMemberCondition(status []v1beta1.RestoreMemberStatus, target v1be
 func isRestoreMemberConditionTrue(status []v1beta1.RestoreMemberStatus, target v1beta1.TargetRef, condType string) bool {
 	// If the target is present in the list, then return the respective value
 	for i := range status {
-		if targetMatched(status[i].Ref, target) {
+		if TargetMatched(status[i].Ref, target) {
 			return kmapi.IsConditionTrue(status[i].Conditions, condType)
 		}
 	}
@@ -465,8 +470,13 @@ func isRestoreMemberConditionTrue(status []v1beta1.RestoreMemberStatus, target v
 func upsertRestoreMemberStatus(cur []v1beta1.RestoreMemberStatus, new v1beta1.RestoreMemberStatus) []v1beta1.RestoreMemberStatus {
 	// if the member status already exist, then update it
 	for i := range cur {
-		if targetMatched(cur[i].Ref, new.Ref) {
-			cur[i] = new
+		if TargetMatched(cur[i].Ref, new.Ref) {
+			cur[i].Ref = new.Ref
+			cur[i].Conditions = upsertConditions(cur[i].Conditions, new.Conditions)
+			if new.TotalHosts != nil {
+				cur[i].TotalHosts = new.TotalHosts
+			}
+			cur[i].Stats = upsertRestoreHostStatus(cur[i].Stats, new.Stats)
 		}
 	}
 	// the member status does not exist. so, add new entry.
@@ -479,4 +489,25 @@ func upsertConditions(cur []kmapi.Condition, new []kmapi.Condition) []kmapi.Cond
 		cur = kmapi.SetCondition(cur, new[i])
 	}
 	return cur
+}
+
+func upsertRestoreHostStatus(cur []v1beta1.HostRestoreStats, new []v1beta1.HostRestoreStats) []v1beta1.HostRestoreStats {
+	for i := range new {
+		index, hostEntryExist := hostEntryIndex(cur, new[i])
+		if hostEntryExist {
+			cur[index] = new[i]
+		} else {
+			cur = append(cur, new[i])
+		}
+	}
+	return cur
+}
+
+func hostEntryIndex(entries []v1beta1.HostRestoreStats, target v1beta1.HostRestoreStats) (int, bool) {
+	for i := range entries {
+		if entries[i].Hostname == target.Hostname {
+			return i, true
+		}
+	}
+	return -1, false
 }

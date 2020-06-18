@@ -54,6 +54,9 @@ const (
 	TargetAppResource = "TARGET_APP_RESOURCE"
 	TargetAppReplicas = "TARGET_APP_REPLICAS"
 
+	InvokerKind = "INVOKER_KIND"
+	InvokerName = "INVOKER_NAME"
+
 	RestorePaths     = "RESTORE_PATHS"
 	RestoreSnapshots = "RESTORE_SNAPSHOTS"
 

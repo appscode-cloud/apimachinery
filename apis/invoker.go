@@ -177,7 +177,7 @@ func ExtractBackupInvokerInfo(stashClient cs.Interface, invokerType, invokerName
 		}
 		invoker.NextInOrder = func(ref v1beta1.TargetRef, targets []v1beta1.Target) bool {
 			for i := range targets {
-				if targetMatched(ref, targets[i].Ref) && targets[i].Phase == "" {
+				if TargetMatched(ref, targets[i].Ref) && targets[i].Phase == "" {
 					break
 				}
 				if targets[i].Phase != v1beta1.TargetBackupSucceeded {
@@ -270,7 +270,7 @@ func ExtractBackupInvokerInfo(stashClient cs.Interface, invokerType, invokerName
 		}
 		invoker.NextInOrder = func(ref v1beta1.TargetRef, targets []v1beta1.Target) bool {
 			for i := range targets {
-				if targetMatched(ref, targets[i].Ref) && targets[i].Phase == "" {
+				if TargetMatched(ref, targets[i].Ref) && targets[i].Phase == "" {
 					break
 				}
 				if targets[i].Phase != v1beta1.TargetBackupSucceeded {
@@ -288,7 +288,7 @@ func ExtractBackupInvokerInfo(stashClient cs.Interface, invokerType, invokerName
 func hasMemberCondition(conditions []v1beta1.MemberConditions, target v1beta1.TargetRef, condType string) bool {
 	// If the target is present in the list, then return the respective value
 	for i := range conditions {
-		if targetMatched(conditions[i].Target, target) {
+		if TargetMatched(conditions[i].Target, target) {
 			return kmapi.HasCondition(conditions[i].Conditions, condType)
 		}
 	}
@@ -299,7 +299,7 @@ func hasMemberCondition(conditions []v1beta1.MemberConditions, target v1beta1.Ta
 func getMemberCondition(conditions []v1beta1.MemberConditions, target v1beta1.TargetRef, condType string) (int, *kmapi.Condition) {
 	// If the target is present in the list, then return the respective condition
 	for i := range conditions {
-		if targetMatched(conditions[i].Target, target) {
+		if TargetMatched(conditions[i].Target, target) {
 			return kmapi.GetCondition(conditions[i].Conditions, condType)
 		}
 	}
@@ -307,10 +307,14 @@ func getMemberCondition(conditions []v1beta1.MemberConditions, target v1beta1.Ta
 	return -1, nil
 }
 
+func TargetMatched(t1, t2 v1beta1.TargetRef) bool {
+	return t1.APIVersion == t2.APIVersion && t1.Kind == t2.Kind && t1.Name == t2.Name
+}
+
 func setMemberCondition(conditions []v1beta1.MemberConditions, target v1beta1.TargetRef, newCondition kmapi.Condition) []v1beta1.MemberConditions {
 	// If the target is already exist in the list, update its condition
 	for i := range conditions {
-		if targetMatched(conditions[i].Target, target) {
+		if TargetMatched(conditions[i].Target, target) {
 			conditions[i].Conditions = kmapi.SetCondition(conditions[i].Conditions, newCondition)
 			return conditions
 		}
@@ -326,14 +330,10 @@ func setMemberCondition(conditions []v1beta1.MemberConditions, target v1beta1.Ta
 func isMemberConditionTrue(conditions []v1beta1.MemberConditions, target v1beta1.TargetRef, condType string) bool {
 	// If the target is present in the list, then return the respective value
 	for i := range conditions {
-		if targetMatched(conditions[i].Target, target) {
+		if TargetMatched(conditions[i].Target, target) {
 			return kmapi.IsConditionTrue(conditions[i].Conditions, condType)
 		}
 	}
 	// Member is not present in the list, so the condition is false
 	return false
-}
-
-func targetMatched(t1, t2 v1beta1.TargetRef) bool {
-	return t1.APIVersion == t2.APIVersion && t1.Kind == t2.Kind && t1.Name == t2.Name
 }
