@@ -26,9 +26,9 @@ const (
 
 	KeyLastAppliedBackupInvoker     = StashKey + "/last-applied-backup-invoker"
 	KeyLastAppliedBackupInvokerKind = StashKey + "/last-applied-backup-invoker-kind"
-	AppliedBackupInvokerSpecHash  = StashKey + "/last-applied-backup-invoker-hash"
+	AppliedBackupInvokerSpecHash    = StashKey + "/last-applied-backup-invoker-hash"
 
-	KeyLastAppliedRestoreInvoker    = StashKey + "/last-applied-restore-invoker"
+	KeyLastAppliedRestoreInvoker     = StashKey + "/last-applied-restore-invoker"
 	KeyLastAppliedRestoreInvokerKind = StashKey + "/last-applied-restore-invoker-kind"
-	AppliedRestoreInvokerSpecHash = StashKey + "/last-applied-restore-invoker-hash"
+	AppliedRestoreInvokerSpecHash    = StashKey + "/last-applied-restore-invoker-hash"
 )

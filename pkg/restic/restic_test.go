@@ -412,6 +412,158 @@ func TestRunParallelDump(t *testing.T) {
 	}
 }
 
+func TestIncludeExcludePattern(t *testing.T) {
+	retentionPolicy := api_v1alpha1.RetentionPolicy{
+		Name:     "keep-last-1",
+		KeepLast: 1,
+		Prune:    true,
+		DryRun:   false,
+	}
+
+	testCases := []struct {
+		name              string
+		backupOpt         BackupOptions
+		restoreOpt        RestoreOptions
+		sourceFileNames   []string
+		restoredFileNames []string
+	}{
+		{
+			name: "normal backup and restore",
+			backupOpt: BackupOptions{
+				RetentionPolicy: retentionPolicy,
+			},
+			sourceFileNames:   []string{"file-1", "file-2", "file-3"},
+			restoredFileNames: []string{"file-1", "file-2", "file-3"},
+		},
+		{
+			name: "exclude one file during backup",
+			backupOpt: BackupOptions{
+				RetentionPolicy: retentionPolicy,
+				Exclude:         []string{"file-1"},
+			},
+			sourceFileNames:   []string{"file-1", "file-2", "file-3"},
+			restoredFileNames: []string{"file-2", "file-3"},
+		},
+		{
+			name: "exclude multiple files during backup",
+			backupOpt: BackupOptions{
+				RetentionPolicy: retentionPolicy,
+				Exclude:         []string{"file-1", "file-2"},
+			},
+			sourceFileNames:   []string{"file-1", "file-2", "file-3"},
+			restoredFileNames: []string{"file-3"},
+		},
+		{
+			name: "include one file during restore",
+			backupOpt: BackupOptions{
+				RetentionPolicy: retentionPolicy,
+			},
+			restoreOpt: RestoreOptions{
+				Include: []string{"file-1"},
+			},
+			sourceFileNames:   []string{"file-1", "file-2", "file-3"},
+			restoredFileNames: []string{"file-1"},
+		},
+		{
+			name: "include multiple files during restore",
+			backupOpt: BackupOptions{
+				RetentionPolicy: retentionPolicy,
+			},
+			restoreOpt: RestoreOptions{
+				Include: []string{"file-1", "file-2"},
+			},
+			sourceFileNames:   []string{"file-1", "file-2", "file-3"},
+			restoredFileNames: []string{"file-1", "file-2"},
+		},
+		{
+			name: "exclude one file during restore",
+			backupOpt: BackupOptions{
+				RetentionPolicy: retentionPolicy,
+			},
+			restoreOpt: RestoreOptions{
+				Exclude: []string{"file-1"},
+			},
+			sourceFileNames:   []string{"file-1", "file-2", "file-3"},
+			restoredFileNames: []string{"file-2", "file-3"},
+		},
+		{
+			name: "exclude multiple files during restore",
+			backupOpt: BackupOptions{
+				RetentionPolicy: retentionPolicy,
+			},
+			restoreOpt: RestoreOptions{
+				Exclude: []string{"file-1", "file-2"},
+			},
+			sourceFileNames:   []string{"file-1", "file-2", "file-3"},
+			restoredFileNames: []string{"file-3"},
+		},
+	}
+	for _, test := range testCases {
+		t.Run(test.name, func(t *testing.T) {
+			tempDir, err := ioutil.TempDir("", "stash-unit-test-")
+			if err != nil {
+				t.Error(err)
+				return
+			}
+
+			w, err := setupTest(tempDir)
+			if err != nil {
+				t.Error(err)
+				return
+			}
+			defer cleanup(tempDir)
+
+			// create the source files
+			err = os.Remove(filepath.Join(targetPath, fileName))
+			if err != nil {
+				t.Error(err)
+				return
+			}
+			for _, name := range test.sourceFileNames {
+				err = ioutil.WriteFile(filepath.Join(targetPath, name), []byte(fileContent), 0777)
+				if err != nil {
+					t.Error(err)
+					return
+				}
+			}
+			test.backupOpt.BackupPaths = []string{targetPath}
+
+			_, err = w.RunBackup(test.backupOpt)
+			if err != nil {
+				t.Error(err)
+				return
+			}
+
+			// delete target then restore
+			if err = os.RemoveAll(targetPath); err != nil {
+				t.Error(err)
+				return
+			}
+			test.restoreOpt.RestorePaths = []string{targetPath}
+
+			_, err = w.RunRestore(test.restoreOpt)
+			if err != nil {
+				t.Error(err)
+				return
+			}
+
+			var restoredFiles []string
+			err = filepath.Walk(targetPath, func(path string, info os.FileInfo, err error) error {
+				if !info.IsDir() {
+					restoredFiles = append(restoredFiles, info.Name())
+				}
+				return nil
+			})
+			if err != nil {
+				t.Error(err)
+				return
+			}
+
+			assert.Equal(t, test.restoredFileNames, restoredFiles)
+		})
+	}
+}
+
 func newParallelBackupOptions() []BackupOptions {
 	return []BackupOptions{
 		{

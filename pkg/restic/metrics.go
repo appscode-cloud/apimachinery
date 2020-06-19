@@ -66,6 +66,8 @@ type BackupSessionMetrics struct {
 	SessionDuration prometheus.Gauge
 	// HostCount indicates the total number of hosts of a target that was backed up in this backup session
 	HostCount prometheus.Gauge
+	// LastSuccessfulBackupTime indicates the time(in unix epoch) when the last successful backup was taken
+	LastSuccessfulBackupTime prometheus.Gauge
 }
 
 // BackupHostMetrics defines Prometheus metrics for individual hosts backup

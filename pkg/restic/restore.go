@@ -214,13 +214,26 @@ func (w *ResticWrapper) runRestore(restoreOptions RestoreOptions) error {
 	if len(restoreOptions.Snapshots) != 0 {
 		for _, snapshot := range restoreOptions.Snapshots {
 			// if snapshot is specified then host and path does not matter.
-			if _, err := w.restore("", "", snapshot, restoreOptions.Destination); err != nil {
+			params := restoreParams{
+				destination: restoreOptions.Destination,
+				snapshotId:  snapshot,
+				excludes:    restoreOptions.Exclude,
+				includes:    restoreOptions.Include,
+			}
+			if _, err := w.restore(params); err != nil {
 				return err
 			}
 		}
 	} else if len(restoreOptions.RestorePaths) != 0 {
 		for _, path := range restoreOptions.RestorePaths {
-			if _, err := w.restore(path, restoreOptions.SourceHost, "", restoreOptions.Destination); err != nil {
+			params := restoreParams{
+				path:        path,
+				host:        restoreOptions.SourceHost,
+				destination: restoreOptions.Destination,
+				excludes:    restoreOptions.Exclude,
+				includes:    restoreOptions.Include,
+			}
+			if _, err := w.restore(params); err != nil {
 				return err
 			}
 		}
