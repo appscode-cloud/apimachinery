@@ -57,6 +57,9 @@ const (
 	InvokerKind = "INVOKER_KIND"
 	InvokerName = "INVOKER_NAME"
 
+	ExcludePatterns = "EXCLUDE_PATTERNS"
+	IncludePatterns = "INCLUDE_PATTERNS"
+
 	RestorePaths     = "RESTORE_PATHS"
 	RestoreSnapshots = "RESTORE_SNAPSHOTS"
 

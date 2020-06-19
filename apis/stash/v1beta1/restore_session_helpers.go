@@ -46,3 +46,18 @@ func (r RestoreSession) OffshootLabels() map[string]string {
 
 	return upsertLabels(r.Labels, overrides)
 }
+
+// UsesDeprecatedField check whether the RestoreSession uses any deprecated filed or not.
+func (r *RestoreSession) UsesDeprecatedField() bool {
+	return len(r.Spec.Rules) > 0
+}
+
+// Migrate moved deprecated fields into the appropriate fields
+func (r *RestoreSession) Migrate() *RestoreSession {
+	// move the deprecated "rules" section of ".Spec" section, into the "rules" section under ".Spec.Target" section
+	if len(r.Spec.Rules) > 0 && r.Spec.Target != nil {
+		r.Spec.Target.Rules = r.Spec.Rules
+		r.Spec.Rules = nil
+	}
+	return r
+}
