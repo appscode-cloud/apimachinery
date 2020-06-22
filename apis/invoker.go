@@ -68,7 +68,7 @@ type Invoker struct {
 	GetCondition       func(*v1beta1.TargetRef, string) (int, *kmapi.Condition, error)
 	SetCondition       func(*v1beta1.TargetRef, kmapi.Condition) error
 	IsConditionTrue    func(*v1beta1.TargetRef, string) (bool, error)
-	NextInOrder        func(v1beta1.TargetRef, []v1beta1.Target) bool
+	NextInOrder        func(v1beta1.TargetRef, []v1beta1.BackupTargetStatus) bool
 }
 
 func ExtractBackupInvokerInfo(stashClient cs.Interface, invokerType, invokerName, namespace string) (Invoker, error) {
@@ -175,7 +175,7 @@ func ExtractBackupInvokerInfo(stashClient cs.Interface, invokerType, invokerName
 			}
 			return kmapi.IsConditionTrue(backupBatch.Status.Conditions, condType), nil
 		}
-		invoker.NextInOrder = func(ref v1beta1.TargetRef, targets []v1beta1.Target) bool {
+		invoker.NextInOrder = func(ref v1beta1.TargetRef, targets []v1beta1.BackupTargetStatus) bool {
 			for i := range targets {
 				if TargetMatched(ref, targets[i].Ref) && targets[i].Phase == "" {
 					break
@@ -268,7 +268,7 @@ func ExtractBackupInvokerInfo(stashClient cs.Interface, invokerType, invokerName
 			}
 			return kmapi.IsConditionTrue(backupConfig.Status.Conditions, condType), nil
 		}
-		invoker.NextInOrder = func(ref v1beta1.TargetRef, targets []v1beta1.Target) bool {
+		invoker.NextInOrder = func(ref v1beta1.TargetRef, targets []v1beta1.BackupTargetStatus) bool {
 			for i := range targets {
 				if TargetMatched(ref, targets[i].Ref) && targets[i].Phase == "" {
 					break

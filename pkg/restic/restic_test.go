@@ -45,6 +45,12 @@ var (
 	stdoutPipeCommand = Command{Name: "cat"}
 )
 
+var testTargetRef = api_v1beta1.TargetRef{
+	APIVersion: "test.stash.appscode.com",
+	Kind:       "UnitTest",
+	Name:       "unit-test-demo",
+}
+
 func setupTest(tempDir string) (*ResticWrapper, error) {
 	localRepoDir = filepath.Join(tempDir, "repo")
 	scratchDir = filepath.Join(tempDir, "scratch")
@@ -116,7 +122,7 @@ func TestBackupRestoreDirs(t *testing.T) {
 			DryRun:   false,
 		},
 	}
-	backupOut, err := w.RunBackup(backupOpt)
+	backupOut, err := w.RunBackup(backupOpt, testTargetRef)
 	if err != nil {
 		t.Error(err)
 	}
@@ -129,7 +135,7 @@ func TestBackupRestoreDirs(t *testing.T) {
 	restoreOpt := RestoreOptions{
 		RestorePaths: []string{targetPath},
 	}
-	restoreOut, err := w.RunRestore(restoreOpt)
+	restoreOut, err := w.RunRestore(restoreOpt, testTargetRef)
 	if err != nil {
 		t.Error(err)
 	}
@@ -165,7 +171,7 @@ func TestBackupRestoreStdin(t *testing.T) {
 			DryRun:   false,
 		},
 	}
-	backupOut, err := w.RunBackup(backupOpt)
+	backupOut, err := w.RunBackup(backupOpt, testTargetRef)
 	if err != nil {
 		t.Error(err)
 	}
@@ -175,7 +181,7 @@ func TestBackupRestoreStdin(t *testing.T) {
 		FileName:          fileName,
 		StdoutPipeCommand: stdoutPipeCommand,
 	}
-	dumpOut, err := w.Dump(dumpOpt)
+	dumpOut, err := w.Dump(dumpOpt, testTargetRef)
 	if err != nil {
 		t.Error(err)
 	}
@@ -211,7 +217,7 @@ func TestBackupRestoreWithScheduling(t *testing.T) {
 			DryRun:   false,
 		},
 	}
-	backupOut, err := w.RunBackup(backupOpt)
+	backupOut, err := w.RunBackup(backupOpt, testTargetRef)
 	if err != nil {
 		t.Error(err)
 	}
@@ -224,7 +230,7 @@ func TestBackupRestoreWithScheduling(t *testing.T) {
 	restoreOpt := RestoreOptions{
 		RestorePaths: []string{targetPath},
 	}
-	restoreOut, err := w.RunRestore(restoreOpt)
+	restoreOut, err := w.RunRestore(restoreOpt, testTargetRef)
 	if err != nil {
 		t.Error(err)
 	}
@@ -268,7 +274,7 @@ func TestBackupRestoreStdinWithScheduling(t *testing.T) {
 			DryRun:   false,
 		},
 	}
-	backupOut, err := w.RunBackup(backupOpt)
+	backupOut, err := w.RunBackup(backupOpt, testTargetRef)
 	if err != nil {
 		t.Error(err)
 	}
@@ -278,7 +284,7 @@ func TestBackupRestoreStdinWithScheduling(t *testing.T) {
 		FileName:          fileName,
 		StdoutPipeCommand: stdoutPipeCommand,
 	}
-	dumpOut, err := w.Dump(dumpOpt)
+	dumpOut, err := w.Dump(dumpOpt, testTargetRef)
 	if err != nil {
 		t.Error(err)
 	}
@@ -302,7 +308,7 @@ func TestRunParallelBackup(t *testing.T) {
 	defer cleanup(tempDir)
 
 	backupOpts := newParallelBackupOptions()
-	backupOutput, err := w.RunParallelBackup(backupOpts, 2)
+	backupOutput, err := w.RunParallelBackup(backupOpts, testTargetRef, 2)
 	if err != nil {
 		t.Error(err)
 	}
@@ -312,8 +318,8 @@ func TestRunParallelBackup(t *testing.T) {
 	assert.Equal(t, backupOutput.RepositoryStats.SnapshotCount, int64(3))
 
 	// verify each host status
-	for i := range backupOutput.HostBackupStats {
-		assert.Equal(t, backupOutput.HostBackupStats[i].Phase, api_v1beta1.HostBackupSucceeded)
+	for i := range backupOutput.BackupTargetStatus.Stats {
+		assert.Equal(t, backupOutput.BackupTargetStatus.Stats[i].Phase, api_v1beta1.HostBackupSucceeded)
 	}
 }
 
@@ -334,14 +340,14 @@ func TestRunParallelRestore(t *testing.T) {
 	defer cleanup(tempDir)
 
 	backupOpts := newParallelBackupOptions()
-	backupOutput, err := w.RunParallelBackup(backupOpts, 2)
+	backupOutput, err := w.RunParallelBackup(backupOpts, testTargetRef, 2)
 	if err != nil {
 		t.Error(err)
 	}
 
 	// verify that all host backup has succeeded
-	for i := range backupOutput.HostBackupStats {
-		assert.Equal(t, backupOutput.HostBackupStats[i].Phase, api_v1beta1.HostBackupSucceeded)
+	for i := range backupOutput.BackupTargetStatus.Stats {
+		assert.Equal(t, backupOutput.BackupTargetStatus.Stats[i].Phase, api_v1beta1.HostBackupSucceeded)
 	}
 
 	// run parallel restore
@@ -349,14 +355,14 @@ func TestRunParallelRestore(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	restoreOutput, err := w.RunParallelRestore(restoreOptions, 2)
+	restoreOutput, err := w.RunParallelRestore(restoreOptions, testTargetRef, 2)
 	if err != nil {
 		t.Error(err)
 	}
 
 	// verify that all host has been restored successfully
-	for i := range restoreOutput.HostRestoreStats {
-		assert.Equal(t, restoreOutput.HostRestoreStats[i].Phase, api_v1beta1.HostRestoreSucceeded)
+	for i := range restoreOutput.RestoreTargetStatus.Stats {
+		assert.Equal(t, restoreOutput.RestoreTargetStatus.Stats[i].Phase, api_v1beta1.HostRestoreSucceeded)
 	}
 
 	// verify that restored file contents are identical to the backed up file
@@ -387,28 +393,31 @@ func TestRunParallelDump(t *testing.T) {
 	}
 
 	backupOpts := newParallelBackupOptions()
-	backupOutput, err := w.RunParallelBackup(backupOpts, 2)
+	backupOutput, err := w.RunParallelBackup(backupOpts, testTargetRef, 2)
 	if err != nil {
 		t.Error(err)
 	}
 
 	// verify that all host backup has succeeded
-	for i := range backupOutput.HostBackupStats {
-		assert.Equal(t, backupOutput.HostBackupStats[i].Phase, api_v1beta1.HostBackupSucceeded)
+	for i := range backupOutput.BackupTargetStatus.Stats {
+		assert.Equal(t, backupOutput.BackupTargetStatus.Stats[i].Phase, api_v1beta1.HostBackupSucceeded)
 	}
 
 	// run parallel dump
 	dumpOptions := newParallelDumpOptions()
 
-	dumpOutput, err := w.ParallelDump(dumpOptions, 2)
+	dumpOutput, err := w.ParallelDump(dumpOptions, testTargetRef, 2)
 	if err != nil {
 		t.Error(err)
 	}
 
 	// verify that all host has been restored successfully
-	for i := range dumpOutput.HostRestoreStats {
-		t.Logf("Host: %s, Phase: %s", dumpOutput.HostRestoreStats[i].Hostname, dumpOutput.HostRestoreStats[i].Phase)
-		assert.Equal(t, dumpOutput.HostRestoreStats[i].Phase, api_v1beta1.HostRestoreSucceeded)
+	for i := range dumpOutput.RestoreTargetStatus.Stats {
+		t.Logf("Host: %s, Phase: %s",
+			dumpOutput.RestoreTargetStatus.Stats[i].Hostname,
+			dumpOutput.RestoreTargetStatus.Stats[i].Phase,
+		)
+		assert.Equal(t, dumpOutput.RestoreTargetStatus.Stats[i].Phase, api_v1beta1.HostRestoreSucceeded)
 	}
 }
 
@@ -528,7 +537,7 @@ func TestIncludeExcludePattern(t *testing.T) {
 			}
 			test.backupOpt.BackupPaths = []string{targetPath}
 
-			_, err = w.RunBackup(test.backupOpt)
+			_, err = w.RunBackup(test.backupOpt, testTargetRef)
 			if err != nil {
 				t.Error(err)
 				return
@@ -541,7 +550,7 @@ func TestIncludeExcludePattern(t *testing.T) {
 			}
 			test.restoreOpt.RestorePaths = []string{targetPath}
 
-			_, err = w.RunRestore(test.restoreOpt)
+			_, err = w.RunRestore(test.restoreOpt, testTargetRef)
 			if err != nil {
 				t.Error(err)
 				return

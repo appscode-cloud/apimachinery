@@ -167,7 +167,7 @@ func UpdateBackupSessionStatusForHost(ctx context.Context, c cs.StashV1beta1Inte
 	}, opts)
 }
 
-func UpsertHostForTarget(targets []api_v1beta1.Target, targetRef api_v1beta1.TargetRef, stat api_v1beta1.HostBackupStats) (int, int, []api_v1beta1.Target) {
+func UpsertHostForTarget(targets []api_v1beta1.BackupTargetStatus, targetRef api_v1beta1.TargetRef, stat api_v1beta1.HostBackupStats) (int, int, []api_v1beta1.BackupTargetStatus) {
 	var targetIdx, hostIdx int
 	for i, target := range targets {
 		if target.Ref.Name == targetRef.Name && target.Ref.Kind == targetRef.Kind {

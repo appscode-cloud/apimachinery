@@ -89,10 +89,10 @@ type BackupSessionStatus struct {
 	SessionDuration string `json:"sessionDuration,omitempty" protobuf:"bytes,2,opt,name=sessionDuration"`
 	// Targets specify the backup status of individual targets
 	// optional
-	Targets []Target `json:"targets,omitempty" protobuf:"bytes,3,rep,name=targets"`
+	Targets []BackupTargetStatus `json:"targets,omitempty" protobuf:"bytes,3,rep,name=targets"`
 }
 
-type Target struct {
+type BackupTargetStatus struct {
 	// Ref refers to the backup target
 	// +optional
 	Ref TargetRef `json:"ref,omitempty" protobuf:"bytes,1,opt,name=ref"`

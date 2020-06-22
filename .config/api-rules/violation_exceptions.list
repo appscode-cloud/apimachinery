@@ -199,6 +199,7 @@ API rule violation: list_type_missing,stash.appscode.dev/apimachinery/apis/stash
 API rule violation: list_type_missing,stash.appscode.dev/apimachinery/apis/stash/v1beta1,BackupTarget,Exclude
 API rule violation: list_type_missing,stash.appscode.dev/apimachinery/apis/stash/v1beta1,BackupTarget,Paths
 API rule violation: list_type_missing,stash.appscode.dev/apimachinery/apis/stash/v1beta1,BackupTarget,VolumeMounts
+API rule violation: list_type_missing,stash.appscode.dev/apimachinery/apis/stash/v1beta1,BackupTargetStatus,Stats
 API rule violation: list_type_missing,stash.appscode.dev/apimachinery/apis/stash/v1beta1,FunctionList,Items
 API rule violation: list_type_missing,stash.appscode.dev/apimachinery/apis/stash/v1beta1,FunctionRef,Params
 API rule violation: list_type_missing,stash.appscode.dev/apimachinery/apis/stash/v1beta1,FunctionSpec,Args
@@ -226,7 +227,6 @@ API rule violation: list_type_missing,stash.appscode.dev/apimachinery/apis/stash
 API rule violation: list_type_missing,stash.appscode.dev/apimachinery/apis/stash/v1beta1,Rule,Paths
 API rule violation: list_type_missing,stash.appscode.dev/apimachinery/apis/stash/v1beta1,Rule,Snapshots
 API rule violation: list_type_missing,stash.appscode.dev/apimachinery/apis/stash/v1beta1,Rule,TargetHosts
-API rule violation: list_type_missing,stash.appscode.dev/apimachinery/apis/stash/v1beta1,Target,Stats
 API rule violation: list_type_missing,stash.appscode.dev/apimachinery/apis/stash/v1beta1,TaskList,Items
 API rule violation: list_type_missing,stash.appscode.dev/apimachinery/apis/stash/v1beta1,TaskRef,Params
 API rule violation: list_type_missing,stash.appscode.dev/apimachinery/apis/stash/v1beta1,TaskSpec,Steps

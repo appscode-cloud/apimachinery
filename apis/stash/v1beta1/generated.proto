@@ -329,7 +329,7 @@ message BackupSessionStatus {
 
   // Targets specify the backup status of individual targets
   // optional
-  repeated Target targets = 3;
+  repeated BackupTargetStatus targets = 3;
 }
 
 message BackupTarget {
@@ -365,6 +365,24 @@ message BackupTarget {
   // Supported only for "Restic" driver
   // +optional
   repeated string exclude = 7;
+}
+
+message BackupTargetStatus {
+  // Ref refers to the backup target
+  // +optional
+  optional TargetRef ref = 1;
+
+  // TotalHosts specifies total number of hosts for this target that will be backed up for a BackupSession
+  // +optional
+  optional int32 totalHosts = 2;
+
+  // Phase indicates backup phase of this target
+  // +optional
+  optional string phase = 3;
+
+  // Stats shows statistics of individual hosts for this backup session
+  // +optional
+  repeated HostBackupStats stats = 4;
 }
 
 message EmptyDirSettings {
@@ -816,24 +834,6 @@ message SnapshotStats {
 
   // FileStats shows statistics of files of this snapshot
   optional FileStats fileStats = 6;
-}
-
-message Target {
-  // Ref refers to the backup target
-  // +optional
-  optional TargetRef ref = 1;
-
-  // TotalHosts specifies total number of hosts for this target that will be backed up for a BackupSession
-  // +optional
-  optional int32 totalHosts = 2;
-
-  // Phase indicates backup phase of this target
-  // +optional
-  optional string phase = 3;
-
-  // Stats shows statistics of individual hosts for this backup session
-  // +optional
-  repeated HostBackupStats stats = 4;
 }
 
 message TargetRef {

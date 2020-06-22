@@ -388,6 +388,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"stash.appscode.dev/apimachinery/apis/stash/v1beta1.BackupSessionSpec":               schema_apimachinery_apis_stash_v1beta1_BackupSessionSpec(ref),
 		"stash.appscode.dev/apimachinery/apis/stash/v1beta1.BackupSessionStatus":             schema_apimachinery_apis_stash_v1beta1_BackupSessionStatus(ref),
 		"stash.appscode.dev/apimachinery/apis/stash/v1beta1.BackupTarget":                    schema_apimachinery_apis_stash_v1beta1_BackupTarget(ref),
+		"stash.appscode.dev/apimachinery/apis/stash/v1beta1.BackupTargetStatus":              schema_apimachinery_apis_stash_v1beta1_BackupTargetStatus(ref),
 		"stash.appscode.dev/apimachinery/apis/stash/v1beta1.EmptyDirSettings":                schema_apimachinery_apis_stash_v1beta1_EmptyDirSettings(ref),
 		"stash.appscode.dev/apimachinery/apis/stash/v1beta1.FileStats":                       schema_apimachinery_apis_stash_v1beta1_FileStats(ref),
 		"stash.appscode.dev/apimachinery/apis/stash/v1beta1.Function":                        schema_apimachinery_apis_stash_v1beta1_Function(ref),
@@ -412,7 +413,6 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"stash.appscode.dev/apimachinery/apis/stash/v1beta1.RestoreTargetSpec":               schema_apimachinery_apis_stash_v1beta1_RestoreTargetSpec(ref),
 		"stash.appscode.dev/apimachinery/apis/stash/v1beta1.Rule":                            schema_apimachinery_apis_stash_v1beta1_Rule(ref),
 		"stash.appscode.dev/apimachinery/apis/stash/v1beta1.SnapshotStats":                   schema_apimachinery_apis_stash_v1beta1_SnapshotStats(ref),
-		"stash.appscode.dev/apimachinery/apis/stash/v1beta1.Target":                          schema_apimachinery_apis_stash_v1beta1_Target(ref),
 		"stash.appscode.dev/apimachinery/apis/stash/v1beta1.TargetRef":                       schema_apimachinery_apis_stash_v1beta1_TargetRef(ref),
 		"stash.appscode.dev/apimachinery/apis/stash/v1beta1.Task":                            schema_apimachinery_apis_stash_v1beta1_Task(ref),
 		"stash.appscode.dev/apimachinery/apis/stash/v1beta1.TaskList":                        schema_apimachinery_apis_stash_v1beta1_TaskList(ref),
@@ -18337,7 +18337,7 @@ func schema_apimachinery_apis_stash_v1beta1_BackupSessionStatus(ref common.Refer
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Ref: ref("stash.appscode.dev/apimachinery/apis/stash/v1beta1.Target"),
+										Ref: ref("stash.appscode.dev/apimachinery/apis/stash/v1beta1.BackupTargetStatus"),
 									},
 								},
 							},
@@ -18347,7 +18347,7 @@ func schema_apimachinery_apis_stash_v1beta1_BackupSessionStatus(ref common.Refer
 			},
 		},
 		Dependencies: []string{
-			"stash.appscode.dev/apimachinery/apis/stash/v1beta1.Target"},
+			"stash.appscode.dev/apimachinery/apis/stash/v1beta1.BackupTargetStatus"},
 	}
 }
 
@@ -18430,6 +18430,53 @@ func schema_apimachinery_apis_stash_v1beta1_BackupTarget(ref common.ReferenceCal
 		},
 		Dependencies: []string{
 			"k8s.io/api/core/v1.VolumeMount", "stash.appscode.dev/apimachinery/apis/stash/v1beta1.TargetRef"},
+	}
+}
+
+func schema_apimachinery_apis_stash_v1beta1_BackupTargetStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"ref": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Ref refers to the backup target",
+							Ref:         ref("stash.appscode.dev/apimachinery/apis/stash/v1beta1.TargetRef"),
+						},
+					},
+					"totalHosts": {
+						SchemaProps: spec.SchemaProps{
+							Description: "TotalHosts specifies total number of hosts for this target that will be backed up for a BackupSession",
+							Type:        []string{"integer"},
+							Format:      "int32",
+						},
+					},
+					"phase": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Phase indicates backup phase of this target",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"stats": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Stats shows statistics of individual hosts for this backup session",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref("stash.appscode.dev/apimachinery/apis/stash/v1beta1.HostBackupStats"),
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		Dependencies: []string{
+			"stash.appscode.dev/apimachinery/apis/stash/v1beta1.HostBackupStats", "stash.appscode.dev/apimachinery/apis/stash/v1beta1.TargetRef"},
 	}
 }
 
@@ -19675,53 +19722,6 @@ func schema_apimachinery_apis_stash_v1beta1_SnapshotStats(ref common.ReferenceCa
 		},
 		Dependencies: []string{
 			"stash.appscode.dev/apimachinery/apis/stash/v1beta1.FileStats"},
-	}
-}
-
-func schema_apimachinery_apis_stash_v1beta1_Target(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
-					"ref": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Ref refers to the backup target",
-							Ref:         ref("stash.appscode.dev/apimachinery/apis/stash/v1beta1.TargetRef"),
-						},
-					},
-					"totalHosts": {
-						SchemaProps: spec.SchemaProps{
-							Description: "TotalHosts specifies total number of hosts for this target that will be backed up for a BackupSession",
-							Type:        []string{"integer"},
-							Format:      "int32",
-						},
-					},
-					"phase": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Phase indicates backup phase of this target",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"stats": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Stats shows statistics of individual hosts for this backup session",
-							Type:        []string{"array"},
-							Items: &spec.SchemaOrArray{
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Ref: ref("stash.appscode.dev/apimachinery/apis/stash/v1beta1.HostBackupStats"),
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-		Dependencies: []string{
-			"stash.appscode.dev/apimachinery/apis/stash/v1beta1.HostBackupStats", "stash.appscode.dev/apimachinery/apis/stash/v1beta1.TargetRef"},
 	}
 }
 
