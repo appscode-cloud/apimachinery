@@ -328,8 +328,12 @@ message BackupSessionStatus {
   optional string sessionDuration = 2;
 
   // Targets specify the backup status of individual targets
-  // optional
+  // +optional
   repeated BackupTargetStatus targets = 3;
+
+  // Conditions shows condition of different operations/steps of the backup process
+  // +optional
+  repeated kmodules.xyz.client_go.api.v1.Condition conditions = 4;
 }
 
 message BackupTarget {

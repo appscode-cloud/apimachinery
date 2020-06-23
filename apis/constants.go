@@ -197,6 +197,15 @@ const (
 	StashInitContainerInjected = "StashInitContainerInjected"
 	// RestoreJobCreated indicates whether the restore job was created
 	RestoreJobCreated = "RestoreJobCreated"
+
+	// PreBackupHookSucceeded indicates whether PreBackupHook was executed successfully or not
+	PreBackupHookSucceeded = "PreBackupHookSucceeded"
+	// PostBackupHookSucceeded indicates whether PostBackupHook was executed successfully or not
+	PostBackupHookSucceeded = "PostBackupHookSucceeded"
+	// PreRestoreHookSucceeded indicates whether PreRestoreHook was executed successfully or not
+	PreRestoreHookSucceeded = "PreRestoreHookSucceeded"
+	// PostRestoreHookSucceeded indicates whether PostRestoreHook was executed successfully or not
+	PostRestoreHookSucceeded = "PostRestoreHookSucceeded"
 )
 
 // Condition Reason Related Constants
@@ -248,4 +257,24 @@ const (
 	RestoreJobCreationSucceeded = "RestoreJobCreationSucceeded"
 	// RestoreJobCreationFailed indicates that the condition transitioned to this state because operator was unable to create restore job
 	RestoreJobCreationFailed = "RestoreJobCreationFailed"
+
+	// PreBackupHookExecutedSuccessfully indicates that the condition transitioned to this state because the PreBackupHook was executed successfully
+	PreBackupHookExecutedSuccessfully = "PreBackupHookExecutedSuccessfully"
+	// PreBackupHookExecutionFailed indicates that the condition transitioned to this state because the Stash was unable to execute PreBackupHook
+	PreBackupHookExecutionFailed = "PreBackupHookExecutionFailed"
+
+	// PostBackupHookExecutedSuccessfully indicates that the condition transitioned to this state because the PostBackupHook was executed successfully
+	PostBackupHookExecutedSuccessfully = "PostBackupHookExecutedSuccessfully"
+	// PostBackupHookExecutionFailed indicates that the condition transitioned to this state because the Stash was unable to execute PostBackupHook
+	PostBackupHookExecutionFailed = "PostBackupHookExecutionFailed"
+
+	// PreRestoreHookExecutedSuccessfully indicates that the condition transitioned to this state because the PreRestoreHook was executed successfully
+	PreRestoreHookExecutedSuccessfully = "PreRestoreHookExecutedSuccessfully"
+	// PreRestoreHookExecutionFailed indicates that the condition transitioned to this state because the Stash was unable to execute PreRestoreHook
+	PreRestoreHookExecutionFailed = "PreRestoreHookExecutionFailed"
+
+	// PostRestoreHookExecutedSuccessfully indicates that the condition transitioned to this state because the PostRestoreHook was executed successfully
+	PostRestoreHookExecutedSuccessfully = "PostRestoreHookExecutedSuccessfully"
+	// PostRestoreHookExecutionFailed indicates that the condition transitioned to this state because the Stash was unable to execute PostRestoreHook
+	PostRestoreHookExecutionFailed = "PostRestoreHookExecutionFailed"
 )

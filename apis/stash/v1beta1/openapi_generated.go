@@ -18332,7 +18332,7 @@ func schema_apimachinery_apis_stash_v1beta1_BackupSessionStatus(ref common.Refer
 					},
 					"targets": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Targets specify the backup status of individual targets optional",
+							Description: "Targets specify the backup status of individual targets",
 							Type:        []string{"array"},
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
@@ -18343,11 +18343,24 @@ func schema_apimachinery_apis_stash_v1beta1_BackupSessionStatus(ref common.Refer
 							},
 						},
 					},
+					"conditions": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Conditions shows condition of different operations/steps of the backup process",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref("kmodules.xyz/client-go/api/v1.Condition"),
+									},
+								},
+							},
+						},
+					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"stash.appscode.dev/apimachinery/apis/stash/v1beta1.BackupTargetStatus"},
+			"kmodules.xyz/client-go/api/v1.Condition", "stash.appscode.dev/apimachinery/apis/stash/v1beta1.BackupTargetStatus"},
 	}
 }
 

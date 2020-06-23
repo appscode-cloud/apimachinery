@@ -11558,6 +11558,13 @@
     "dev.appscode.stash.apimachinery.apis.stash.v1beta1.BackupSessionStatus": {
       "type": "object",
       "properties": {
+        "conditions": {
+          "description": "Conditions shows condition of different operations/steps of the backup process",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/xyz.kmodules.client-go.api.v1.Condition"
+          }
+        },
         "phase": {
           "description": "Phase indicates the overall phase of the backup process for this BackupSession. Phase will be \"Succeeded\" only if phase of all hosts are \"Succeeded\". If any of the host fail to complete backup, Phase will be \"Failed\".",
           "type": "string"
@@ -11567,7 +11574,7 @@
           "type": "string"
         },
         "targets": {
-          "description": "Targets specify the backup status of individual targets optional",
+          "description": "Targets specify the backup status of individual targets",
           "type": "array",
           "items": {
             "$ref": "#/definitions/dev.appscode.stash.apimachinery.apis.stash.v1beta1.BackupTargetStatus"

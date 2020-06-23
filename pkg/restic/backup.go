@@ -235,8 +235,8 @@ func (w *ResticWrapper) runBackup(backupOption BackupOptions) (api_v1beta1.HostB
 	// Backup all target paths
 	for _, path := range backupOption.BackupPaths {
 		params := backupParams{
-			path: path,
-			host: backupOption.Host,
+			path:     path,
+			host:     backupOption.Host,
 			excludes: backupOption.Exclude,
 		}
 		out, err := w.backup(params)
