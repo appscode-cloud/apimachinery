@@ -48,8 +48,8 @@ const (
 	MetricsLabelBackend    = "backend"
 	MetricsLabelBucket     = "bucket"
 	MetricsLabelPrefix     = "prefix"
-	MetricLabelInvokerKind = "invoker-kind"
-	MetricLabelInvokerName = "invoker-name"
+	MetricLabelInvokerKind = "invoker_kind"
+	MetricLabelInvokerName = "invoker_name"
 	MetricLabelHostname    = "hostname"
 )
 
